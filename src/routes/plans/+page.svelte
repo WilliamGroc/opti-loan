@@ -40,6 +40,17 @@
 		totalInterest: number;
 		totalRemaining: number;
 	}> = [];
+	let optimizedPlanAmortizationTable: Array<{
+		month: number;
+		date: Date;
+		loansData: Array<{ name: string; monthlyPayment: number; principal: number; interest: number }>;
+		totalMonthlyPayment: number;
+		totalPrincipal: number;
+		totalInterest: number;
+		totalRemaining: number;
+	}> = [];
+	let showOptimizedPlan = false;
+	let optimizationSavings = 0;
 	const FINANCING_PLANS_KEY = 'opti-loan-plans';
 
 	// Load financing plans from local storage
@@ -104,19 +115,10 @@
 					
 					// Calculate remaining balance at this month
 					let remaining = loan.amount;
-					let principal = 0;
-					let interest = 0;
-					let monthlyPaymentForMonth = loan.monthlyPayment;
-
-					// Get monthly payment based on calculation mode
-					if (loan.calculationMode === 'variable' && loan.paymentPeriods) {
-						const period = loan.paymentPeriods.find(p => monthInLoan >= p.startMonth && monthInLoan <= p.endMonth);
-						monthlyPaymentForMonth = period ? period.monthlyPayment : loan.monthlyPayment;
-					}
 
 					// Calculate amortization for each month up to current
-					for (let m = 1; m <= monthInLoan; m++) {
-						let paymentForMonth = monthlyPaymentForMonth;
+					for (let m = 1; m < monthInLoan; m++) {
+						let paymentForMonth = loan.monthlyPayment;
 						if (loan.calculationMode === 'variable' && loan.paymentPeriods) {
 							const period = loan.paymentPeriods.find(p => m >= p.startMonth && m <= p.endMonth);
 							paymentForMonth = period ? period.monthlyPayment : loan.monthlyPayment;
@@ -125,23 +127,29 @@
 						const monthInterest = remaining * monthlyRate;
 						const monthPrincipal = paymentForMonth - monthInterest;
 						remaining -= monthPrincipal;
-
-						if (m === monthInLoan) {
-							interest = monthInterest;
-							principal = monthPrincipal;
-						}
 					}
+
+					// Now calculate for the current month
+					let currentMonthPayment = loan.monthlyPayment;
+					if (loan.calculationMode === 'variable' && loan.paymentPeriods) {
+						const period = loan.paymentPeriods.find(p => monthInLoan >= p.startMonth && monthInLoan <= p.endMonth);
+						currentMonthPayment = period ? period.monthlyPayment : loan.monthlyPayment;
+					}
+
+					const interest = remaining * monthlyRate;
+					const principal = currentMonthPayment - interest;
+					remaining -= principal;
 
 					if (remaining < 0) remaining = 0;
 
-					totalMonthlyPayment += monthlyPaymentForMonth;
+					totalMonthlyPayment += currentMonthPayment;
 					totalPrincipal += principal;
 					totalInterest += interest;
 					totalRemaining += remaining;
 
 					loansData.push({
 						name: loan.name,
-						monthlyPayment: monthlyPaymentForMonth,
+						monthlyPayment: currentMonthPayment,
 						principal: principal,
 						interest: interest
 					});
@@ -205,6 +213,140 @@
 		financingPlans = [clonedPlan, ...financingPlans];
 		localStorage.setItem(FINANCING_PLANS_KEY, JSON.stringify(financingPlans));
 		alert('Plan cloné avec succès !');
+	}
+
+	// Optimize financing plan using avalanche method (pay highest rate first)
+	function optimizePlan(plan: FinancingPlan) {
+		optimizedPlanAmortizationTable = [];
+
+		// Find the earliest start date and latest end date
+		let minStartDate = new Date(plan.selectedLoans[0].startDate);
+		let maxEndDate = new Date(plan.selectedLoans[0].startDate);
+
+		plan.selectedLoans.forEach(loan => {
+			const start = parse(loan.startDate, 'yyyy-MM-dd', new Date());
+			const end = addMonths(start, loan.durationYears * 12);
+			if (start < minStartDate) minStartDate = start;
+			if (end > maxEndDate) maxEndDate = end;
+		});
+
+		const totalMonths = Math.ceil((maxEndDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+
+		// Calculate total monthly payment available
+		const totalMonthlyBudget = plan.selectedLoans.reduce((sum, loan) => sum + loan.monthlyPayment, 0);
+
+		// Initialize loan balances
+		interface LoanBalance {
+			loan: SavedLoan;
+			remaining: number;
+			startMonth: number;
+			endMonth: number;
+		}
+
+		const loanBalances: LoanBalance[] = plan.selectedLoans.map(loan => {
+			const start = parse(loan.startDate, 'yyyy-MM-dd', new Date());
+			const startMonth = Math.round((start.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+			return {
+				loan,
+				remaining: loan.amount,
+				startMonth,
+				endMonth: startMonth + loan.durationYears * 12
+			};
+		});
+
+		// Create optimized amortization table
+		for (let month = 1; month <= totalMonths; month++) {
+			const currentDate = addMonths(minStartDate, month);
+			let budgetRemaining = totalMonthlyBudget;
+			let totalPrincipal = 0;
+			let totalInterest = 0;
+			let totalRemaining = 0;
+			const loansData: Array<{ name: string; monthlyPayment: number; principal: number; interest: number }> = [];
+
+			// Get active loans for this month
+			const activeLoans = loanBalances.filter(lb => 
+				month > lb.startMonth && month <= lb.endMonth && lb.remaining > 0.01
+			);
+
+			if (activeLoans.length === 0) {
+				continue;
+			}
+
+			// Étape 1: Calculer et payer tous les intérêts
+			const loanPayments: Array<{
+				loanBalance: LoanBalance;
+				interest: number;
+				principal: number;
+			}> = [];
+
+			activeLoans.forEach(lb => {
+				const monthlyRate = lb.loan.annualRate / 100 / 12;
+				const interest = lb.remaining * monthlyRate;
+				
+				loanPayments.push({
+					loanBalance: lb,
+					interest,
+					principal: 0
+				});
+
+				budgetRemaining -= interest;
+			});
+
+			// Étape 2: Trier les prêts par taux d'intérêt (décroissant)
+			const sortedPayments = [...loanPayments].sort((a, b) => 
+				b.loanBalance.loan.annualRate - a.loanBalance.loan.annualRate
+			);
+
+			// Étape 3: Distribuer le budget restant pour rembourser le capital
+			// en priorité sur les prêts avec les taux les plus élevés (méthode avalanche)
+			for (const payment of sortedPayments) {
+				if (budgetRemaining <= 0) break;
+
+				// Montant maximum qu'on peut rembourser sur ce prêt
+				const maxPrincipal = Math.min(budgetRemaining, payment.loanBalance.remaining);
+				payment.principal = maxPrincipal;
+				budgetRemaining -= maxPrincipal;
+
+				// Mettre à jour le capital restant
+				payment.loanBalance.remaining -= maxPrincipal;
+
+				if (payment.loanBalance.remaining < 0.01) {
+					payment.loanBalance.remaining = 0;
+				}
+			}
+
+			// Étape 4: Enregistrer les données pour l'affichage
+			loanPayments.forEach(payment => {
+				totalPrincipal += payment.principal;
+				totalInterest += payment.interest;
+				totalRemaining += payment.loanBalance.remaining;
+
+				loansData.push({
+					name: payment.loanBalance.loan.name,
+					monthlyPayment: payment.interest + payment.principal,
+					principal: payment.principal,
+					interest: payment.interest
+				});
+			});
+
+			optimizedPlanAmortizationTable.push({
+				month,
+				date: currentDate,
+				loansData,
+				totalMonthlyPayment: totalMonthlyBudget,
+				totalPrincipal,
+				totalInterest,
+				totalRemaining
+			});
+		}
+
+		// Calculate savings
+		calculatePlanAmortization(plan);
+		const originalInterest = planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0);
+		const optimizedInterest = optimizedPlanAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0);
+		optimizationSavings = originalInterest - optimizedInterest;
+
+		showOptimizedPlan = true;
 	}
 
 	onMount(() => {
@@ -363,28 +505,45 @@
 									<table class="amortization-table">
 										<thead>
 											<tr>
-												<th>Mois</th>
-												<th>Date</th>
-												<th>Mensualité totale</th>
+												<th rowspan="2">Mois</th>
+												<th rowspan="2">Date</th>
+												<th rowspan="2">Prêt</th>
+												<th colspan="3">Détails du paiement</th>
+												<th rowspan="2">Restant dû</th>
+											</tr>
+											<tr>
+												<th>Mensualité</th>
 												<th>Capital</th>
 												<th>Intérêts</th>
-												<th>Restant dû</th>
 											</tr>
 										</thead>
 										<tbody>
 											{#each planAmortizationTable as row, i}
 												{#if i < 12 || i >= planAmortizationTable.length - 12 || i % 12 === 0}
-													<tr>
-														<td>{row.month}</td>
-														<td>{format(row.date, 'MMM yyyy', { locale: fr })}</td>
-														<td>{row.totalMonthlyPayment.toFixed(2)} €</td>
-														<td>{row.totalPrincipal.toFixed(2)} €</td>
-														<td>{row.totalInterest.toFixed(2)} €</td>
-														<td>{row.totalRemaining.toFixed(2)} €</td>
+													{#each row.loansData as loanData, loanIndex}
+														<tr class="loan-row">
+															{#if loanIndex === 0}
+																<td rowspan={row.loansData.length + 1} class="month-cell">{row.month}</td>
+																<td rowspan={row.loansData.length + 1} class="date-cell">{format(row.date, 'MMM yyyy', { locale: fr })}</td>
+															{/if}
+															<td class="loan-name-cell">{loanData.name}</td>
+															<td>{loanData.monthlyPayment.toFixed(2)} €</td>
+															<td>{loanData.principal.toFixed(2)} €</td>
+															<td>{loanData.interest.toFixed(2)} €</td>
+															{#if loanIndex === 0}
+																<td rowspan={row.loansData.length + 1} class="remaining-cell">{row.totalRemaining.toFixed(2)} €</td>
+															{/if}
+														</tr>
+													{/each}
+													<tr class="total-row">
+														<td class="total-label">TOTAL</td>
+														<td class="total-value">{row.totalMonthlyPayment.toFixed(2)} €</td>
+														<td class="total-value">{row.totalPrincipal.toFixed(2)} €</td>
+														<td class="total-value">{row.totalInterest.toFixed(2)} €</td>
 													</tr>
 												{:else if i === 12}
 													<tr class="ellipsis">
-														<td colspan="6">...</td>
+														<td colspan="7">...</td>
 													</tr>
 												{/if}
 											{/each}
@@ -396,7 +555,99 @@
 									<button on:click={() => exportPlanAsCSV(plan, index)} class="btn-export">
 										📥 Exporter en CSV
 									</button>
+									<button on:click={() => optimizePlan(plan)} class="btn-optimize">
+										⚡ Optimiser le plan
+									</button>
 								</div>
+
+								{#if showOptimizedPlan && selectedPlanIndex === index}
+									<div class="optimization-section">
+										<h5>Plan Optimisé</h5>
+										<div class="optimization-alert">
+											<div class="alert-icon">✨</div>
+											<div class="alert-content">
+												<strong>Économie potentielle : {optimizationSavings.toFixed(2)} €</strong>
+												<p>En redistribuant vos paiements pour rembourser en priorité les prêts à taux élevé, vous économiserez {optimizationSavings.toFixed(2)} € d'intérêts !</p>
+											</div>
+										</div>
+
+										<div class="detail-summary">
+											<div class="summary-card">
+												<span class="label">Intérêts originaux</span>
+												<span class="value">
+													{planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €
+												</span>
+											</div>
+											<div class="summary-card optimized">
+												<span class="label">Intérêts optimisés</span>
+												<span class="value">
+													{optimizedPlanAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €
+												</span>
+											</div>
+											<div class="summary-card savings">
+												<span class="label">Économie</span>
+												<span class="value">
+													-{optimizationSavings.toFixed(2)} €
+												</span>
+											</div>
+										</div>
+
+										<div class="comparison-note">
+											<strong>💡 Comment ça marche ?</strong>
+											<p>L'optimisation utilise la méthode "avalanche" : chaque mois, après avoir payé les intérêts de tous les prêts, le reste de votre budget est alloué en priorité au prêt avec le taux d'intérêt le plus élevé. Cette stratégie minimise les intérêts totaux.</p>
+										</div>
+
+										<div class="table-wrapper">
+											<table class="amortization-table optimized-table">
+												<thead>
+													<tr>
+														<th rowspan="2">Mois</th>
+														<th rowspan="2">Date</th>
+														<th rowspan="2">Prêt</th>
+														<th colspan="3">Détails du paiement optimisé</th>
+														<th rowspan="2">Restant dû</th>
+													</tr>
+													<tr>
+														<th>Mensualité</th>
+														<th>Capital</th>
+														<th>Intérêts</th>
+													</tr>
+												</thead>
+												<tbody>
+													{#each optimizedPlanAmortizationTable as row, i}
+														{#if i < 12 || i >= optimizedPlanAmortizationTable.length - 12 || i % 12 === 0}
+															{#each row.loansData as loanData, loanIndex}
+																<tr class="loan-row optimized">
+																	{#if loanIndex === 0}
+																		<td rowspan={row.loansData.length + 1} class="month-cell">{row.month}</td>
+																		<td rowspan={row.loansData.length + 1} class="date-cell">{format(row.date, 'MMM yyyy', { locale: fr })}</td>
+																	{/if}
+																	<td class="loan-name-cell">{loanData.name}</td>
+																	<td class="optimized-value">{loanData.monthlyPayment.toFixed(2)} €</td>
+																	<td class="optimized-value">{loanData.principal.toFixed(2)} €</td>
+																	<td class="optimized-value">{loanData.interest.toFixed(2)} €</td>
+																	{#if loanIndex === 0}
+																		<td rowspan={row.loansData.length + 1} class="remaining-cell">{row.totalRemaining.toFixed(2)} €</td>
+																	{/if}
+																</tr>
+															{/each}
+															<tr class="total-row optimized">
+																<td class="total-label">TOTAL</td>
+																<td class="total-value optimized">{row.totalMonthlyPayment.toFixed(2)} €</td>
+																<td class="total-value optimized">{row.totalPrincipal.toFixed(2)} €</td>
+																<td class="total-value optimized">{row.totalInterest.toFixed(2)} €</td>
+															</tr>
+														{:else if i === 12}
+															<tr class="ellipsis">
+																<td colspan="7">...</td>
+															</tr>
+														{/if}
+													{/each}
+												</tbody>
+											</table>
+										</div>
+									</div>
+								{/if}
 							</div>
 						{/if}
 					</div>
@@ -737,10 +988,86 @@
 	.amortization-table th {
 		background: #667eea;
 		color: white;
+		padding: 0.75rem;
+		text-align: center;
+		vertical-align: middle;
 	}
 
 	.amortization-table td {
 		padding: 0.75rem;
+		text-align: center;
+		vertical-align: middle;
+	}
+
+	.amortization-table .month-cell,
+	.amortization-table .date-cell {
+		background: #f8f9fa;
+		font-weight: 600;
+		border-right: 2px solid #e0e0e0;
+	}
+
+	.amortization-table .loan-name-cell {
+		text-align: left;
+		color: #667eea;
+		font-weight: 500;
+		padding-left: 1rem;
+	}
+
+	.amortization-table .remaining-cell {
+		background: #f8f9fa;
+		font-weight: 600;
+		border-left: 2px solid #e0e0e0;
+	}
+
+	.amortization-table .loan-row {
+		border-bottom: 1px solid #f0f0f0;
+	}
+
+	.amortization-table .loan-row:hover {
+		background: #fafafa;
+	}
+
+	.amortization-table .total-row {
+		background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+		font-weight: 700;
+		border-top: 2px solid #667eea;
+		border-bottom: 2px solid #667eea;
+	}
+
+	.amortization-table .total-label {
+		text-align: left;
+		padding-left: 1rem;
+		color: #667eea;
+		font-size: 0.85rem;
+		letter-spacing: 0.5px;
+	}
+
+	.amortization-table .total-value {
+		color: #667eea;
+		font-weight: 700;
+	}
+
+	.amortization-table.optimized-table th {
+		background: #28a745;
+	}
+
+	.amortization-table.optimized-table .total-row {
+		background: linear-gradient(135deg, #28a74520 0%, #20c99720 100%);
+		border-top: 2px solid #28a745;
+		border-bottom: 2px solid #28a745;
+	}
+
+	.amortization-table.optimized-table .total-label {
+		color: #28a745;
+	}
+
+	.amortization-table.optimized-table .total-value {
+		color: #28a745;
+	}
+
+	.amortization-table .optimized-value {
+		color: #28a745;
+		font-weight: 500;
 	}
 
 	.amortization-table tr.ellipsis td {
@@ -753,6 +1080,7 @@
 		display: flex;
 		gap: 1rem;
 		justify-content: center;
+		flex-wrap: wrap;
 	}
 
 	.btn-export {
@@ -769,6 +1097,106 @@
 	.btn-export:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+	}
+
+	.btn-optimize {
+		padding: 0.75rem 1.5rem;
+		background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.btn-optimize:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+	}
+
+	.optimization-section {
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 3px solid #28a745;
+	}
+
+	.optimization-section h5 {
+		color: #28a745;
+		font-size: 1.2rem;
+		margin: 0 0 1rem 0;
+	}
+
+	.optimization-alert {
+		background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+		border: 2px solid #28a745;
+		border-radius: 12px;
+		padding: 1.5rem;
+		margin-bottom: 1.5rem;
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+
+	.alert-icon {
+		font-size: 2.5rem;
+		flex-shrink: 0;
+	}
+
+	.alert-content {
+		flex: 1;
+	}
+
+	.alert-content strong {
+		color: #155724;
+		font-size: 1.2rem;
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+
+	.alert-content p {
+		color: #155724;
+		margin: 0;
+		line-height: 1.5;
+	}
+
+	.summary-card.optimized {
+		border: 2px solid #28a745;
+		background: #f0fff4;
+	}
+
+	.summary-card.optimized .value {
+		color: #28a745;
+	}
+
+	.summary-card.savings {
+		border: 2px solid #ffc107;
+		background: #fffbf0;
+	}
+
+	.summary-card.savings .value {
+		color: #ff6b00;
+		font-size: 1.5rem;
+	}
+
+	.comparison-note {
+		background: #f8f9fa;
+		border-left: 4px solid #667eea;
+		padding: 1rem 1.5rem;
+		margin-bottom: 1.5rem;
+		border-radius: 4px;
+	}
+
+	.comparison-note strong {
+		color: #667eea;
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+
+	.comparison-note p {
+		color: #555;
+		margin: 0;
+		line-height: 1.6;
 	}
 
 	@media (max-width: 768px) {
@@ -817,6 +1245,22 @@
 		th,
 		td {
 			padding: 0.5rem;
+			font-size: 0.8rem;
+		}
+
+		.amortization-table {
+			font-size: 0.75rem;
+		}
+
+		.amortization-table th,
+		.amortization-table td {
+			padding: 0.5rem 0.3rem;
+		}
+
+		.amortization-table .loan-name-cell,
+		.amortization-table .total-label {
+			padding-left: 0.5rem;
+			font-size: 0.75rem;
 		}
 
 		.summary-grid,
@@ -836,8 +1280,18 @@
 			flex-direction: column;
 		}
 
-		.btn-export {
+		.btn-export,
+		.btn-optimize {
 			width: 100%;
+		}
+
+		.optimization-alert {
+			flex-direction: column;
+			text-align: center;
+		}
+
+		.alert-icon {
+			font-size: 3rem;
 		}
 	}
 </style>
