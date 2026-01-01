@@ -24,6 +24,9 @@ RUN echo "=== Contenu de /app/build ===" && ls -la /app/build/
 # Stage 2: Runtime
 FROM nginx:alpine
 
+# Supprimer l'index.html par défaut de nginx
+RUN rm -f /usr/share/nginx/html/index.html /usr/share/nginx/html/50x.html
+
 # Copier la configuration nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
