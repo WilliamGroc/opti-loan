@@ -18,16 +18,20 @@ COPY . .
 # Builder l'application
 RUN pnpm build
 
+# Afficher ce qui a été généré
+RUN echo "=== Contenu de /app/build ===" && ls -la /app/build/
+
 # Stage 2: Runtime
 FROM nginx:alpine
 
-WORKDIR /usr/share/nginx/html
+# Copier la configuration nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copier les fichiers buildés statiques
-COPY --from=builder /app/build .
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# Copier la configuration nginx
-RUN echo 'server { listen 80; location / { try_files $uri $uri/ /200.html; } }' > /etc/nginx/conf.d/default.conf
+# Diagnostics
+RUN echo "=== Contenu de /usr/share/nginx/html ===" && ls -la /usr/share/nginx/html/ && echo "=== Fichiers HTML ===" && find /usr/share/nginx/html -name "*.html" -type f
 
 # Exposer le port
 EXPOSE 80
