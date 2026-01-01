@@ -174,7 +174,7 @@ export function optimizePlan(plan: FinancingPlan): {
 
     // Obtenir les prêts actifs pour ce mois
     const activeLoans = loanBalances.filter(
-      lb => month > lb.startMonth && month <= lb.endMonth && lb.remaining > 0.01
+      lb => month > lb.startMonth && lb.remaining > 0.01
     );
 
     if (activeLoans.length === 0) {
