@@ -19,23 +19,18 @@ COPY . .
 RUN pnpm build
 
 # Stage 2: Runtime
-FROM node:20-alpine
+FROM nginx:alpine
 
-WORKDIR /app
+WORKDIR /usr/share/nginx/html
 
-# Installer pnpm
-RUN npm install -g pnpm
+# Copier les fichiers buildés statiques
+COPY --from=builder /app/build .
 
-# Copier les fichiers nécessaires du builder
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod
-
-# Copier les fichiers buildés
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/src/app.html ./build/
+# Copier la configuration nginx
+RUN echo 'server { listen 80; location / { try_files $uri $uri/ /200.html; } }' > /etc/nginx/conf.d/default.conf
 
 # Exposer le port
-EXPOSE 3000
+EXPOSE 80
 
 # Commande de démarrage
-CMD ["node", "-e", "import('./build/index.js').catch(err => console.error(err))"]
+CMD ["nginx", "-g", "daemon off;"]
