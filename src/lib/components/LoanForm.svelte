@@ -68,11 +68,7 @@
 	{/if}
 
 	{#if calculationMode === 'variable'}
-		<VariablePaymentPeriods
-			bind:monthlyPayment
-			bind:paymentPeriods
-			{durationYears}
-		/>
+		<VariablePaymentPeriods bind:monthlyPayment bind:paymentPeriods {durationYears} />
 	{/if}
 
 	<div class="save-section">

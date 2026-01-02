@@ -12,9 +12,7 @@
 <div class="loan-card">
 	<div class="loan-card-header">
 		<h3>{loan.name}</h3>
-		<button on:click={() => onDelete(loan.id)} class="btn-delete" title="Supprimer">
-			🗑️
-		</button>
+		<button on:click={() => onDelete(loan.id)} class="btn-delete" title="Supprimer"> 🗑️ </button>
 	</div>
 	<div class="loan-details">
 		<div class="loan-detail">

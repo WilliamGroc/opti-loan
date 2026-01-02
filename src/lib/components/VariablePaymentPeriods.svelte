@@ -42,13 +42,7 @@
 	<div class="input-group">
 		<label for="mensualite-defaut">
 			Mensualité par défaut (€)
-			<input
-				id="mensualite-defaut"
-				type="number"
-				bind:value={monthlyPayment}
-				min="100"
-				step="10"
-			/>
+			<input id="mensualite-defaut" type="number" bind:value={monthlyPayment} min="100" step="10" />
 		</label>
 	</div>
 

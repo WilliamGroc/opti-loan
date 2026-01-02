@@ -22,7 +22,7 @@
 
 		const selectedLoans = savedLoans.filter((loan) => selectedLoansForPlan.has(loan.id));
 		const updatedPlans = createFinancingPlan(financingPlans, financingPlanName, selectedLoans);
-		
+
 		onPlanCreated(updatedPlans);
 		financingPlanName = '';
 		selectedLoansForPlan = new Set();
@@ -68,9 +68,7 @@
 			</div>
 		</div>
 
-		<button on:click={handleCreateFinancingPlan} class="btn-create-plan">
-			📋 Créer le plan
-		</button>
+		<button on:click={handleCreateFinancingPlan} class="btn-create-plan"> 📋 Créer le plan </button>
 	</div>
 {:else}
 	<p class="info-message">

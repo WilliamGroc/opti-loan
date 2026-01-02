@@ -133,6 +133,22 @@
 		<h1>Calculateur de Prêt</h1>
 		<nav class="nav-links">
 			<a href="/plans" class="btn-nav" title="Voir les plans de financement"> 📋 Mes Plans </a>
+			<a
+				href="mailto:william.groc@gmail.com?subject=Feedback%20OptiLoan"
+				class="btn-nav btn-feedback"
+				title="Envoyer un feedback"
+			>
+				💬 Feedback
+			</a>
+			<a
+				href="https://www.paypal.com/paypalme/grocwilliam"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="btn-nav btn-donate"
+				title="Faire un don"
+			>
+				❤️ Donation
+			</a>
 		</nav>
 	</div>
 
@@ -158,16 +174,9 @@
 	<div class="financing-plan">
 		<h2>Plan de Financement</h2>
 
-		<FinancingPlanForm
-			{savedLoans}
-			bind:financingPlans
-			onPlanCreated={handlePlanCreated}
-		/>
+		<FinancingPlanForm {savedLoans} bind:financingPlans onPlanCreated={handlePlanCreated} />
 
-		<FinancingPlansList
-			bind:financingPlans
-			onDelete={handleDeleteFinancingPlan}
-		/>
+		<FinancingPlansList bind:financingPlans onDelete={handleDeleteFinancingPlan} />
 	</div>
 
 	<ResultsCards {monthlyPayment} {totalCost} {totalInterest} {durationYears} />
@@ -264,6 +273,24 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 	}
 
+	.btn-feedback {
+		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+		color: white;
+	}
+
+	.btn-feedback:hover {
+		background: linear-gradient(135deg, #059669 0%, #047857 100%);
+	}
+
+	.btn-donate {
+		background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+		color: white;
+	}
+
+	.btn-donate:hover {
+		background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+	}
+
 	h2 {
 		color: #333;
 		font-size: 1.5rem;
@@ -334,6 +361,7 @@
 
 		.nav-links {
 			justify-content: center;
+			flex-wrap: wrap;
 		}
 
 		.btn-nav {

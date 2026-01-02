@@ -41,9 +41,7 @@
 		<div class="plan-detail">
 			<span class="label">Montant total:</span>
 			<span class="value highlight"
-				>{plan.selectedLoans
-					.reduce((sum, loan) => sum + loan.amount, 0)
-					.toLocaleString('fr-FR')} €</span
+				>{plan.selectedLoans.reduce((sum, loan) => sum + loan.amount, 0).toLocaleString('fr-FR')} €</span
 			>
 		</div>
 		<div class="plan-detail">
@@ -87,9 +85,7 @@
 				<div class="summary-card">
 					<span class="label">Total intérêts</span>
 					<span class="value">
-						{planAmortizationTable
-							.reduce((sum, row) => sum + row.totalInterest, 0)
-							.toFixed(2)} €
+						{planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €
 					</span>
 				</div>
 				<div class="summary-card">
