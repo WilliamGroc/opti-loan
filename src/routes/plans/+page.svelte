@@ -7,13 +7,13 @@
 		SummaryCard,
 		EmptyState,
 		AmortizationTable,
-		OptimizationAlert
+		OptimizationAlert,
+		LoanComparisonChart
 	} from '$lib/components';
 	import {
 		type FinancingPlan,
 		type AmortizationRow,
 		loadFinancingPlans,
-		saveFinancingPlans,
 		deleteFinancingPlan,
 		clonePlan as clonePlanService,
 		addFinancingPlan,
@@ -30,6 +30,7 @@
 	let optimizedPlanAmortizationTable: AmortizationRow[] = [];
 	let showOptimizedPlan = false;
 	let optimizationSavings = 0;
+	let showPlanAmortizationTable = false;
 
 	// Delete financing plan
 	function handleDeletePlan(index: number) {
@@ -41,6 +42,7 @@
 	// Handle calculating amortization
 	function handleCalculateAmortization(plan: FinancingPlan) {
 		planAmortizationTable = calculatePlanAmortization(plan);
+		showPlanAmortizationTable = true;
 	}
 
 	// Handle exporting plan
@@ -70,6 +72,7 @@
 			optimizedPlanAmortizationTable = table;
 			optimizationSavings = savings;
 			showOptimizedPlan = true;
+			showPlanAmortizationTable = false;
 			console.log('showOptimizedPlan mis à jour:', showOptimizedPlan);
 		} catch (error) {
 			console.error("Erreur lors de l'optimisation:", error);
@@ -240,7 +243,15 @@
 									</Button>
 								</div>
 
-								{#if !showOptimizedPlan && selectedPlanIndex === index}
+								<Button
+									variant="secondary"
+									on:click={() => (showPlanAmortizationTable = !showPlanAmortizationTable)}
+								>
+									{showPlanAmortizationTable ? 'Masquer' : 'Afficher'} le tableau d'amortissement
+								</Button>
+
+								{#if showPlanAmortizationTable && selectedPlanIndex === index}
+									<LoanComparisonChart data={planAmortizationTable} />
 									<AmortizationTable
 										data={planAmortizationTable}
 										showFull={showFullAmortizationTable}
@@ -284,6 +295,8 @@
 												minimise les intérêts totaux.
 											</p>
 										</div>
+
+										<LoanComparisonChart data={optimizedPlanAmortizationTable} />
 
 										<AmortizationTable
 											data={optimizedPlanAmortizationTable}

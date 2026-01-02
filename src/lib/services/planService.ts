@@ -2,7 +2,7 @@
  * Service pour la gestion des plans de financement
  */
 
-import type { FinancingPlan } from './types';
+import type { FinancingPlan, SavedLoan } from './types';
 
 const FINANCING_PLANS_KEY = 'opti-loan-plans';
 
@@ -77,4 +77,21 @@ export function updateFinancingPlan(
   updated[index] = updatedPlan;
   saveFinancingPlans(updated);
   return updated;
+}
+
+/**
+ * Crée un nouveau plan de financement
+ */
+export function createFinancingPlan(
+  plans: FinancingPlan[],
+  planName: string,
+  selectedLoans: SavedLoan[]
+): FinancingPlan[] {
+  const plan: FinancingPlan = {
+    name: planName,
+    selectedLoans: selectedLoans,
+    createdDate: new Date().toISOString()
+  };
+
+  return addFinancingPlan(plans, plan);
 }
