@@ -148,7 +148,7 @@
 	// Delete a loan
 	function deleteLoan(id: string) {
 		if (confirm('Voulez-vous vraiment supprimer ce prêt ?')) {
-			savedLoans = savedLoans.filter(p => p.id !== id);
+			savedLoans = savedLoans.filter((p) => p.id !== id);
 			localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedLoans));
 		}
 	}
@@ -187,7 +187,7 @@
 	// Add a payment period
 	function addPeriod() {
 		if (newPeriodStartMonth < 1 || newPeriodEndMonth > durationYears * 12) {
-			alert('Les mois doivent être entre 1 et ' + (durationYears * 12));
+			alert('Les mois doivent être entre 1 et ' + durationYears * 12);
 			return;
 		}
 		if (newPeriodStartMonth > newPeriodEndMonth) {
@@ -211,14 +211,14 @@
 
 	// Delete a period
 	function deletePeriod(id: string) {
-		paymentPeriods = paymentPeriods.filter(p => p.id !== id);
+		paymentPeriods = paymentPeriods.filter((p) => p.id !== id);
 	}
 
 	// Get monthly payment for a given month
 	function getMonthlyPaymentForMonth(month: number): number {
 		if (calculationMode !== 'variable') return monthlyPayment;
-		
-		const period = paymentPeriods.find(p => month >= p.startMonth && month <= p.endMonth);
+
+		const period = paymentPeriods.find((p) => month >= p.startMonth && month <= p.endMonth);
 		return period ? period.monthlyPayment : monthlyPayment;
 	}
 
@@ -234,7 +234,7 @@
 			return;
 		}
 
-		const selectedLoans = savedLoans.filter(loan => selectedLoansForPlan.has(loan.id));
+		const selectedLoans = savedLoans.filter((loan) => selectedLoansForPlan.has(loan.id));
 
 		const plan: FinancingPlan = {
 			name: financingPlanName,
@@ -266,7 +266,7 @@
 		let minStartDate = new Date(plan.selectedLoans[0].startDate);
 		let maxEndDate = new Date(plan.selectedLoans[0].startDate);
 
-		plan.selectedLoans.forEach(loan => {
+		plan.selectedLoans.forEach((loan) => {
 			const start = parse(loan.startDate, 'yyyy-MM-dd', new Date());
 			const end = addMonths(start, loan.durationYears * 12);
 			if (start < minStartDate) minStartDate = start;
@@ -274,7 +274,9 @@
 		});
 
 		// Calculate months between min and max
-		const totalMonths = Math.ceil((maxEndDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+		const totalMonths = Math.ceil(
+			(maxEndDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+		);
 
 		// Create amortization table
 		for (let month = 1; month <= totalMonths; month++) {
@@ -283,17 +285,24 @@
 			let totalPrincipal = 0;
 			let totalInterest = 0;
 			let totalRemaining = 0;
-			const loansData: Array<{ name: string; monthlyPayment: number; principal: number; interest: number }> = [];
+			const loansData: Array<{
+				name: string;
+				monthlyPayment: number;
+				principal: number;
+				interest: number;
+			}> = [];
 
-			plan.selectedLoans.forEach(loan => {
+			plan.selectedLoans.forEach((loan) => {
 				const loanStartDate = parse(loan.startDate, 'yyyy-MM-dd', new Date());
-				const loanStartMonth = Math.round((loanStartDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+				const loanStartMonth = Math.round(
+					(loanStartDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+				);
 				const loanEndMonth = loanStartMonth + loan.durationYears * 12;
 				const monthInLoan = month - loanStartMonth;
 
 				if (monthInLoan > 0 && monthInLoan <= loan.durationYears * 12) {
 					const monthlyRate = loan.annualRate / 100 / 12;
-					
+
 					// Calculate remaining balance at this month
 					let remaining = loan.amount;
 					let principal = 0;
@@ -302,7 +311,9 @@
 
 					// Get monthly payment based on calculation mode
 					if (loan.calculationMode === 'variable' && loan.paymentPeriods) {
-						const period = loan.paymentPeriods.find(p => monthInLoan >= p.startMonth && monthInLoan <= p.endMonth);
+						const period = loan.paymentPeriods.find(
+							(p) => monthInLoan >= p.startMonth && monthInLoan <= p.endMonth
+						);
 						monthlyPaymentForMonth = period ? period.monthlyPayment : loan.monthlyPayment;
 					}
 
@@ -310,7 +321,7 @@
 					for (let m = 1; m <= monthInLoan; m++) {
 						let paymentForMonth = monthlyPaymentForMonth;
 						if (loan.calculationMode === 'variable' && loan.paymentPeriods) {
-							const period = loan.paymentPeriods.find(p => m >= p.startMonth && m <= p.endMonth);
+							const period = loan.paymentPeriods.find((p) => m >= p.startMonth && m <= p.endMonth);
 							paymentForMonth = period ? period.monthlyPayment : loan.monthlyPayment;
 						}
 
@@ -407,7 +418,7 @@
 
 	// Initial calculation
 	$: {
-		amount, annualRate, durationYears, monthlyPayment, calculationMode, startDate, paymentPeriods;
+		(amount, annualRate, durationYears, monthlyPayment, calculationMode, startDate, paymentPeriods);
 		calculateLoan();
 	}
 </script>
@@ -416,9 +427,7 @@
 	<div class="page-header">
 		<h1>Calculateur de Prêt</h1>
 		<nav class="nav-links">
-			<a href="/plans" class="btn-nav" title="Voir les plans de financement">
-				📋 Mes Plans
-			</a>
+			<a href="/plans" class="btn-nav" title="Voir les plans de financement"> 📋 Mes Plans </a>
 		</nav>
 	</div>
 
@@ -426,51 +435,28 @@
 		<div class="input-group">
 			<label for="montant">
 				Montant du prêt (€)
-				<input
-					id="montant"
-					type="number"
-					bind:value={amount}
-					min="1000"
-					step="1000"
-				/>
+				<input id="montant" type="number" bind:value={amount} min="1000" step="1000" />
 			</label>
 		</div>
 
 		<div class="input-group">
 			<label for="taux">
 				Taux d'intérêt annuel (%)
-				<input
-					id="taux"
-					type="number"
-					bind:value={annualRate}
-					min="0"
-					max="20"
-					step="0.1"
-				/>
+				<input id="taux" type="number" bind:value={annualRate} min="0" max="20" step="0.1" />
 			</label>
 		</div>
 
 		<div class="input-group">
 			<label for="duree">
 				Durée (années)
-				<input
-					id="duree"
-					type="number"
-					bind:value={durationYears}
-					min="1"
-					max="50"
-				/>
+				<input id="duree" type="number" bind:value={durationYears} min="1" max="50" />
 			</label>
 		</div>
 
 		<div class="input-group">
 			<label for="dateDebut">
 				Date de début du prêt
-				<input
-					id="dateDebut"
-					type="date"
-					bind:value={startDate}
-				/>
+				<input id="dateDebut" type="date" bind:value={startDate} />
 			</label>
 		</div>
 
@@ -493,13 +479,7 @@
 			<div class="input-group">
 				<label for="mensualite">
 					Mensualité souhaitée (€)
-					<input
-						id="mensualite"
-						type="number"
-						bind:value={monthlyPayment}
-						min="100"
-						step="10"
-					/>
+					<input id="mensualite" type="number" bind:value={monthlyPayment} min="100" step="10" />
 				</label>
 			</div>
 		{/if}
@@ -569,7 +549,8 @@
 						{#each paymentPeriods as period}
 							<div class="periode-item">
 								<span class="periode-info">
-									Mois {period.startMonth} à {period.endMonth} : <strong>{period.monthlyPayment.toFixed(2)} €</strong>
+									Mois {period.startMonth} à {period.endMonth} :
+									<strong>{period.monthlyPayment.toFixed(2)} €</strong>
 								</span>
 								<button on:click={() => deletePeriod(period.id)} class="btn-delete-small">
 									❌
@@ -590,9 +571,7 @@
 					bind:value={loanName}
 					class="save-input"
 				/>
-				<button on:click={saveLoan} class="btn-primary">
-					💾 Sauvegarder
-				</button>
+				<button on:click={saveLoan} class="btn-primary"> 💾 Sauvegarder </button>
 			</div>
 		</div>
 	</div>
@@ -602,15 +581,10 @@
 			<div class="saved-loans-header">
 				<h2>Prêts sauvegardés ({savedLoans.length})</h2>
 				<div class="header-actions">
-					<button
-						on:click={() => showSavedLoans = !showSavedLoans}
-						class="btn-secondary"
-					>
+					<button on:click={() => (showSavedLoans = !showSavedLoans)} class="btn-secondary">
 						{showSavedLoans ? '▼ Masquer' : '▶ Afficher'}
 					</button>
-					<button on:click={exportLoans} class="btn-secondary">
-						📥 Exporter
-					</button>
+					<button on:click={exportLoans} class="btn-secondary"> 📥 Exporter </button>
 				</div>
 			</div>
 
@@ -620,11 +594,7 @@
 						<div class="loan-card">
 							<div class="loan-card-header">
 								<h3>{loan.name}</h3>
-								<button
-									on:click={() => deleteLoan(loan.id)}
-									class="btn-delete"
-									title="Supprimer"
-								>
+								<button on:click={() => deleteLoan(loan.id)} class="btn-delete" title="Supprimer">
 									🗑️
 								</button>
 							</div>
@@ -647,16 +617,14 @@
 								</div>
 								<div class="loan-detail">
 									<span class="label">Sauvegardé le:</span>
-									<span class="value">{format(new Date(loan.saveDate), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
+									<span class="value"
+										>{format(new Date(loan.saveDate), 'dd/MM/yyyy HH:mm', { locale: fr })}</span
+									>
 								</div>
 							</div>
 							<div class="loan-actions">
-								<button on:click={() => loadLoan(loan)} class="btn-load">
-									📂 Charger
-								</button>
-								<button on:click={() => cloneLoan(loan)} class="btn-clone">
-									📋 Cloner
-								</button>
+								<button on:click={() => loadLoan(loan)} class="btn-load"> 📂 Charger </button>
+								<button on:click={() => cloneLoan(loan)} class="btn-clone"> 📋 Cloner </button>
 							</div>
 						</div>
 					{/each}
@@ -667,7 +635,7 @@
 
 	<div class="financing-plan">
 		<h2>Plan de Financement</h2>
-		
+
 		{#if savedLoans.length > 0}
 			<div class="plan-creation">
 				<h3>Créer un nouveau plan</h3>
@@ -698,29 +666,27 @@
 									}}
 								/>
 								<span class="checkbox-label">
-									<strong>{loan.name}</strong> - {loan.amount.toLocaleString('fr-FR')} € ({loan.durationYears} ans)
+									<strong>{loan.name}</strong> - {loan.amount.toLocaleString('fr-FR')} € ({loan.durationYears}
+									ans)
 								</span>
 							</label>
 						{/each}
 					</div>
 				</div>
 
-				<button on:click={createFinancingPlan} class="btn-create-plan">
-					📋 Créer le plan
-				</button>
+				<button on:click={createFinancingPlan} class="btn-create-plan"> 📋 Créer le plan </button>
 			</div>
 		{:else}
-			<p class="info-message">Créez et sauvegardez au moins un prêt pour créer un plan de financement.</p>
+			<p class="info-message">
+				Créez et sauvegardez au moins un prêt pour créer un plan de financement.
+			</p>
 		{/if}
 
 		{#if financingPlans.length > 0}
 			<div class="plans-list">
 				<div class="plans-header">
 					<h3>Plans créés ({financingPlans.length})</h3>
-					<button
-						on:click={() => showFinancingPlans = !showFinancingPlans}
-						class="btn-secondary"
-					>
+					<button on:click={() => (showFinancingPlans = !showFinancingPlans)} class="btn-secondary">
 						{showFinancingPlans ? '▼ Masquer' : '▶ Afficher'}
 					</button>
 				</div>
@@ -747,11 +713,19 @@
 									</div>
 									<div class="plan-detail">
 										<span class="label">Montant total:</span>
-										<span class="value highlight">{plan.selectedLoans.reduce((sum, loan) => sum + loan.amount, 0).toLocaleString('fr-FR')} €</span>
+										<span class="value highlight"
+											>{plan.selectedLoans
+												.reduce((sum, loan) => sum + loan.amount, 0)
+												.toLocaleString('fr-FR')} €</span
+										>
 									</div>
 									<div class="plan-detail">
 										<span class="label">Créé le:</span>
-										<span class="value">{format(new Date(plan.createdDate), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
+										<span class="value"
+											>{format(new Date(plan.createdDate), 'dd/MM/yyyy HH:mm', {
+												locale: fr
+											})}</span
+										>
 									</div>
 								</div>
 
@@ -759,17 +733,22 @@
 									<h5>Prêts inclus:</h5>
 									<ul>
 										{#each plan.selectedLoans as loan}
-											<li>{loan.name} - {loan.amount.toLocaleString('fr-FR')} € ({loan.durationYears} ans)</li>
+											<li>
+												{loan.name} - {loan.amount.toLocaleString('fr-FR')} € ({loan.durationYears} ans)
+											</li>
 										{/each}
 									</ul>
 								</div>
 
-								<button on:click={() => {
-									selectedPlanIndex = selectedPlanIndex === index ? -1 : index;
-									if (selectedPlanIndex !== -1) {
-										calculatePlanAmortization(plan);
-									}
-								}} class="btn-view-details">
+								<button
+									on:click={() => {
+										selectedPlanIndex = selectedPlanIndex === index ? -1 : index;
+										if (selectedPlanIndex !== -1) {
+											calculatePlanAmortization(plan);
+										}
+									}}
+									class="btn-view-details"
+								>
 									{selectedPlanIndex === index ? '▼ Masquer détails' : '▶ Voir détails'}
 								</button>
 
@@ -780,13 +759,20 @@
 											<div class="summary-card">
 												<span class="label">Mensualité totale moyenne</span>
 												<span class="value">
-													{(planAmortizationTable.reduce((sum, row) => sum + row.totalMonthlyPayment, 0) / Math.max(planAmortizationTable.length, 1)).toFixed(2)} €
+													{(
+														planAmortizationTable.reduce(
+															(sum, row) => sum + row.totalMonthlyPayment,
+															0
+														) / Math.max(planAmortizationTable.length, 1)
+													).toFixed(2)} €
 												</span>
 											</div>
 											<div class="summary-card">
 												<span class="label">Total intérêts</span>
 												<span class="value">
-													{planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €
+													{planAmortizationTable
+														.reduce((sum, row) => sum + row.totalInterest, 0)
+														.toFixed(2)} €
 												</span>
 											</div>
 											<div class="summary-card">
@@ -902,8 +888,8 @@
 	:global(body) {
 		margin: 0;
 		padding: 0;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-			Cantarell, sans-serif;
+		font-family:
+			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		min-height: 100vh;
 	}
@@ -1170,7 +1156,9 @@
 		font-size: 1rem;
 		font-weight: 600;
 		cursor: pointer;
-		transition: transform 0.2s, box-shadow 0.2s;
+		transition:
+			transform 0.2s,
+			box-shadow 0.2s;
 		white-space: nowrap;
 	}
 
@@ -1468,7 +1456,9 @@
 		font-size: 1rem;
 		font-weight: 600;
 		cursor: pointer;
-		transition: transform 0.2s, box-shadow 0.2s;
+		transition:
+			transform 0.2s,
+			box-shadow 0.2s;
 	}
 
 	.btn-create-plan:hover {

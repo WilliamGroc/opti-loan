@@ -26,6 +26,13 @@
 	export let onToggleFull: (() => void) | undefined = undefined;
 </script>
 
+{#if onToggleFull}
+	<div class="button-container">
+		<button on:click={onToggleFull} class="btn-toggle">
+			{showFull ? '📊 Affichage condensé' : '📊 Afficher toutes les mensualités'}
+		</button>
+	</div>
+{/if}
 <div class="table-wrapper">
 	<table class="amortization-table" class:optimized={variant === 'optimized'}>
 		<thead>
@@ -49,21 +56,39 @@
 						<tr class="loan-row" class:optimized={variant === 'optimized'}>
 							{#if loanIndex === 0}
 								<td rowspan={row.loansData.length + 1} class="month-cell">{row.month}</td>
-								<td rowspan={row.loansData.length + 1} class="date-cell">{format(row.date, 'MMM yyyy', { locale: fr })}</td>
+								<td rowspan={row.loansData.length + 1} class="date-cell"
+									>{format(row.date, 'MMM yyyy', { locale: fr })}</td
+								>
 							{/if}
 							<td class="loan-name-cell">{loanData.name}</td>
-							<td class:optimized-value={variant === 'optimized'}>{loanData.monthlyPayment.toFixed(2)} €</td>
-							<td class:optimized-value={variant === 'optimized'}>{loanData.principal.toFixed(2)} €</td>
-							<td class:optimized-value={variant === 'optimized'}>{loanData.interest.toFixed(2)} €</td>
-							<td class:optimized-value={variant === 'optimized'}>{loanData.remaining.toFixed(2)} €</td>
+							<td class:optimized-value={variant === 'optimized'}
+								>{loanData.monthlyPayment.toFixed(2)} €</td
+							>
+							<td class:optimized-value={variant === 'optimized'}
+								>{loanData.principal.toFixed(2)} €</td
+							>
+							<td class:optimized-value={variant === 'optimized'}
+								>{loanData.interest.toFixed(2)} €</td
+							>
+							<td class:optimized-value={variant === 'optimized'}
+								>{loanData.remaining.toFixed(2)} €</td
+							>
 						</tr>
 					{/each}
 					<tr class="total-row" class:optimized={variant === 'optimized'}>
 						<td class="total-label">TOTAL</td>
-						<td class="total-value" class:optimized={variant === 'optimized'}>{row.totalMonthlyPayment.toFixed(2)} €</td>
-						<td class="total-value" class:optimized={variant === 'optimized'}>{row.totalPrincipal.toFixed(2)} €</td>
-						<td class="total-value" class:optimized={variant === 'optimized'}>{row.totalInterest.toFixed(2)} €</td>
-						<td class="total-value" class:optimized={variant === 'optimized'}>{row.totalRemaining.toFixed(2)} €</td>
+						<td class="total-value" class:optimized={variant === 'optimized'}
+							>{row.totalMonthlyPayment.toFixed(2)} €</td
+						>
+						<td class="total-value" class:optimized={variant === 'optimized'}
+							>{row.totalPrincipal.toFixed(2)} €</td
+						>
+						<td class="total-value" class:optimized={variant === 'optimized'}
+							>{row.totalInterest.toFixed(2)} €</td
+						>
+						<td class="total-value" class:optimized={variant === 'optimized'}
+							>{row.totalRemaining.toFixed(2)} €</td
+						>
 					</tr>
 				{:else if i === 12 && !showFull}
 					<tr class="ellipsis">
@@ -74,14 +99,6 @@
 		</tbody>
 	</table>
 </div>
-
-{#if onToggleFull}
-	<div class="button-container">
-		<button on:click={onToggleFull} class="btn-toggle">
-			{showFull ? '📊 Affichage condensé' : '📊 Afficher toutes les mensualités'}
-		</button>
-	</div>
-{/if}
 
 <style>
 	.table-wrapper {

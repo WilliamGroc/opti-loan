@@ -1,16 +1,12 @@
 <script lang="ts">
-	export let variant: 'primary' | 'secondary' | 'danger' | 'success' | 'info' | 'default' = 'primary';
+	export let variant: 'primary' | 'secondary' | 'danger' | 'success' | 'info' | 'default' =
+		'primary';
 	export let size: 'sm' | 'md' | 'lg' = 'md';
 	export let fullWidth = false;
 	export let disabled = false;
 </script>
 
-<button 
-	class="btn btn-{variant} btn-{size}"
-	class:full-width={fullWidth}
-	{disabled}
-	on:click
->
+<button class="btn btn-{variant} btn-{size}" class:full-width={fullWidth} {disabled} on:click>
 	<slot />
 </button>
 

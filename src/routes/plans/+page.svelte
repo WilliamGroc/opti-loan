@@ -2,7 +2,13 @@
 	import { format } from 'date-fns';
 	import { fr } from 'date-fns/locale';
 	import { onMount } from 'svelte';
-	import { Button, SummaryCard, EmptyState, AmortizationTable, OptimizationAlert } from '$lib/components';
+	import {
+		Button,
+		SummaryCard,
+		EmptyState,
+		AmortizationTable,
+		OptimizationAlert
+	} from '$lib/components';
 	import {
 		type FinancingPlan,
 		type AmortizationRow,
@@ -66,8 +72,8 @@
 			showOptimizedPlan = true;
 			console.log('showOptimizedPlan mis à jour:', showOptimizedPlan);
 		} catch (error) {
-			console.error('Erreur lors de l\'optimisation:', error);
-			alert('Une erreur s\'est produite lors de l\'optimisation du plan');
+			console.error("Erreur lors de l'optimisation:", error);
+			alert("Une erreur s'est produite lors de l'optimisation du plan");
 		}
 	}
 
@@ -83,7 +89,7 @@
 	</div>
 
 	{#if financingPlans.length === 0}
-		<EmptyState 
+		<EmptyState
 			title="Aucun plan de financement"
 			description="Créez votre premier plan depuis la page du calculateur en sélectionnant plusieurs prêts."
 			icon="📋"
@@ -93,10 +99,15 @@
 	{:else}
 		<div class="plans-stats">
 			<SummaryCard label="Plans créés" value={financingPlans.length.toString()} />
-			<SummaryCard label="Prêts totaux" value={financingPlans.reduce((sum, p) => sum + p.selectedLoans.length, 0).toString()} />
-			<SummaryCard 
-				label="Montant total financé" 
-				value="{financingPlans.reduce((sum, p) => sum + p.selectedLoans.reduce((s, l) => s + l.amount, 0), 0).toLocaleString('fr-FR')} €" 
+			<SummaryCard
+				label="Prêts totaux"
+				value={financingPlans.reduce((sum, p) => sum + p.selectedLoans.length, 0).toString()}
+			/>
+			<SummaryCard
+				label="Montant total financé"
+				value="{financingPlans
+					.reduce((sum, p) => sum + p.selectedLoans.reduce((s, l) => s + l.amount, 0), 0)
+					.toLocaleString('fr-FR')} €"
 			/>
 		</div>
 
@@ -106,19 +117,13 @@
 					<div class="plan-header">
 						<div class="plan-title">
 							<h2>{plan.name}</h2>
-							<p class="plan-date">Créé le {format(new Date(plan.createdDate), 'dd/MM/yyyy HH:mm', { locale: fr })}</p>
+							<p class="plan-date">
+								Créé le {format(new Date(plan.createdDate), 'dd/MM/yyyy HH:mm', { locale: fr })}
+							</p>
 						</div>
 						<div class="plan-actions">
-							<Button 
-								variant="secondary" 
-								on:click={() => handleClonePlan(plan)}
-							>
-								📋 Cloner
-							</Button>
-							<Button 
-								variant="danger"
-								on:click={() => handleDeletePlan(index)}
-							>
+							<Button variant="secondary" on:click={() => handleClonePlan(plan)}>📋 Cloner</Button>
+							<Button variant="danger" on:click={() => handleDeletePlan(index)}>
 								🗑️ Supprimer
 							</Button>
 						</div>
@@ -157,17 +162,21 @@
 					<div class="plan-summary">
 						<h3>Résumé du plan</h3>
 						<div class="summary-grid">
-							<SummaryCard 
-								label="Montant total" 
-								value="{plan.selectedLoans.reduce((sum, loan) => sum + loan.amount, 0).toLocaleString('fr-FR')} €" 
+							<SummaryCard
+								label="Montant total"
+								value="{plan.selectedLoans
+									.reduce((sum, loan) => sum + loan.amount, 0)
+									.toLocaleString('fr-FR')} €"
 							/>
-							<SummaryCard 
-								label="Mensualité totale" 
-								value="{plan.selectedLoans.reduce((sum, loan) => sum + loan.monthlyPayment, 0).toFixed(2)} €" 
+							<SummaryCard
+								label="Mensualité totale"
+								value="{plan.selectedLoans
+									.reduce((sum, loan) => sum + loan.monthlyPayment, 0)
+									.toFixed(2)} €"
 							/>
-							<SummaryCard 
-								label="Durée max" 
-								value="{Math.max(...plan.selectedLoans.map(l => l.durationYears))} ans" 
+							<SummaryCard
+								label="Durée max"
+								value="{Math.max(...plan.selectedLoans.map((l) => l.durationYears))} ans"
 							/>
 						</div>
 					</div>
@@ -182,48 +191,63 @@
 							}}
 							class="btn-expand"
 						>
-							{selectedPlanIndex === index ? '▼ Masquer le tableau d\'amortissement' : '▶ Voir le tableau d\'amortissement'}
+							{selectedPlanIndex === index
+								? "▼ Masquer le tableau d'amortissement"
+								: "▶ Voir le tableau d'amortissement"}
 						</button>
 
 						{#if selectedPlanIndex === index}
 							<div class="amortization-detail">
 								<div class="detail-summary">
-									<SummaryCard 
-										label="Mensualité moyenne" 
-										value="{(planAmortizationTable.reduce((sum, row) => sum + row.totalMonthlyPayment, 0) / Math.max(planAmortizationTable.length, 1)).toFixed(2)} €" 
+									<SummaryCard
+										label="Mensualité moyenne"
+										value="{(
+											planAmortizationTable.reduce((sum, row) => sum + row.totalMonthlyPayment, 0) /
+											Math.max(planAmortizationTable.length, 1)
+										).toFixed(2)} €"
 									/>
-									<SummaryCard 
-										label="Intérêts totaux" 
-										value="{planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €" 
+									<SummaryCard
+										label="Intérêts totaux"
+										value="{planAmortizationTable
+											.reduce((sum, row) => sum + row.totalInterest, 0)
+											.toFixed(2)} €"
 									/>
-									<SummaryCard 
-										label="Durée du plan" 
-										value="{Math.ceil(planAmortizationTable.length / 12)} ans ({planAmortizationTable.length} mois)" 
+									<SummaryCard
+										label="Durée du plan"
+										value="{Math.ceil(
+											planAmortizationTable.length / 12
+										)} ans ({planAmortizationTable.length} mois)"
 									/>
-									<SummaryCard 
-										label="Coût total" 
-										value="{(planAmortizationTable[planAmortizationTable.length - 1]?.totalMonthlyPayment ?? 0) > 0 
-											? (plan.selectedLoans.reduce((sum, l) => sum + l.amount, 0) + planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0)).toLocaleString('fr-FR') 
-											: '0'} €" 
+									<SummaryCard
+										label="Coût total"
+										value="{(planAmortizationTable[planAmortizationTable.length - 1]
+											?.totalMonthlyPayment ?? 0) > 0
+											? (
+													plan.selectedLoans.reduce((sum, l) => sum + l.amount, 0) +
+													planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0)
+												).toLocaleString('fr-FR')
+											: '0'} €"
 										variant="default"
 									/>
 								</div>
 
-								<AmortizationTable 
-									data={planAmortizationTable} 
-									showFull={showFullAmortizationTable}
-									variant="default"
-									onToggleFull={() => showFullAmortizationTable = !showFullAmortizationTable}
-								/>
-
 								<div class="action-buttons">
-								<Button variant="info" on:click={() => handleExportPlan(plan)}>
-									📥 Exporter en CSV
-								</Button>
-								<Button variant="success" on:click={() => handleOptimizePlan(plan)}>
+									<Button variant="info" on:click={() => handleExportPlan(plan)}>
+										📥 Exporter en CSV
+									</Button>
+									<Button variant="success" on:click={() => handleOptimizePlan(plan)}>
 										⚡ Optimiser le plan
 									</Button>
 								</div>
+
+								{#if !showOptimizedPlan && selectedPlanIndex === index}
+									<AmortizationTable
+										data={planAmortizationTable}
+										showFull={showFullAmortizationTable}
+										variant="default"
+										onToggleFull={() => (showFullAmortizationTable = !showFullAmortizationTable)}
+									/>
+								{/if}
 
 								{#if showOptimizedPlan && selectedPlanIndex === index}
 									<div class="optimization-section">
@@ -231,32 +255,41 @@
 										<OptimizationAlert savings={optimizationSavings} />
 
 										<div class="detail-summary">
-											<SummaryCard 
-												label="Intérêts originaux" 
-												value="{planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €" 
+											<SummaryCard
+												label="Intérêts originaux"
+												value="{planAmortizationTable
+													.reduce((sum, row) => sum + row.totalInterest, 0)
+													.toFixed(2)} €"
 											/>
-											<SummaryCard 
-												label="Intérêts optimisés" 
-												value="{optimizedPlanAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €" 
+											<SummaryCard
+												label="Intérêts optimisés"
+												value="{optimizedPlanAmortizationTable
+													.reduce((sum, row) => sum + row.totalInterest, 0)
+													.toFixed(2)} €"
 												variant="optimized"
 											/>
-											<SummaryCard 
-												label="Économie" 
-												value="-{optimizationSavings.toFixed(2)} €" 
+											<SummaryCard
+												label="Économie"
+												value="-{optimizationSavings.toFixed(2)} €"
 												variant="savings"
 											/>
 										</div>
 
 										<div class="comparison-note">
 											<strong>💡 Comment ça marche ?</strong>
-											<p>L'optimisation utilise la méthode "avalanche" : chaque mois, après avoir payé les intérêts de tous les prêts, le reste de votre budget est alloué en priorité au prêt avec le taux d'intérêt le plus élevé. Cette stratégie minimise les intérêts totaux.</p>
+											<p>
+												L'optimisation utilise la méthode "avalanche" : chaque mois, après avoir
+												payé les intérêts de tous les prêts, le reste de votre budget est alloué en
+												priorité au prêt avec le taux d'intérêt le plus élevé. Cette stratégie
+												minimise les intérêts totaux.
+											</p>
 										</div>
 
-										<AmortizationTable 
-											data={optimizedPlanAmortizationTable} 
+										<AmortizationTable
+											data={optimizedPlanAmortizationTable}
 											showFull={showFullOptimizedTable}
 											variant="optimized"
-											onToggleFull={() => showFullOptimizedTable = !showFullOptimizedTable}
+											onToggleFull={() => (showFullOptimizedTable = !showFullOptimizedTable)}
 										/>
 									</div>
 								{/if}
@@ -273,8 +306,8 @@
 	:global(body) {
 		margin: 0;
 		padding: 0;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-			Cantarell, sans-serif;
+		font-family:
+			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		min-height: 100vh;
 	}
@@ -462,7 +495,7 @@
 		gap: 1rem;
 		justify-content: center;
 		flex-wrap: wrap;
-		margin-top: 2rem;
+		margin-bottom: 2rem;
 	}
 
 	.optimization-section {

@@ -6,7 +6,10 @@
 	<div class="alert-icon">✨</div>
 	<div class="alert-content">
 		<strong>Économie potentielle : {savings.toFixed(2)} €</strong>
-		<p>En redistribuant vos paiements pour rembourser en priorité les prêts à taux élevé, vous économiserez {savings.toFixed(2)} € d'intérêts !</p>
+		<p>
+			En redistribuant vos paiements pour rembourser en priorité les prêts à taux élevé, vous
+			économiserez {savings.toFixed(2)} € d'intérêts !
+		</p>
 	</div>
 </div>
 
