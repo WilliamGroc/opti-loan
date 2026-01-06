@@ -22,6 +22,28 @@
 		exportPlanAsCSV
 	} from '$lib/services';
 
+	const siteName = 'Calcul Prêt';
+	const siteUrl = 'https://www.calcul-pret.com';
+	const pageTitle = 'Plans de financement multi-prêts | Calcul-pret.com';
+	const pageDescription =
+		"Comparez, optimisez et exportez vos plans de financement multi-prêts avec amortissement détaillé et alertes d'optimisation.";
+
+	const structuredData = {
+		'@context': 'https://schema.org',
+		'@type': 'WebPage',
+		name: pageTitle,
+		description: pageDescription,
+		url: `${siteUrl}/plans`,
+		publisher: {
+			'@type': 'Organization',
+			name: siteName,
+			logo: {
+				'@type': 'ImageObject',
+				url: `${siteUrl}/icon-512.png`
+			}
+		}
+	};
+
 	let financingPlans: FinancingPlan[] = [];
 	let selectedPlanIndex = -1;
 	let showFullAmortizationTable = false;
@@ -84,6 +106,27 @@
 		financingPlans = loadFinancingPlans();
 	});
 </script>
+
+<svelte:head>
+	<title>{pageTitle}</title>
+	<link rel="canonical" href={`${siteUrl}/plans`} />
+	<meta name="description" content={pageDescription} />
+	<meta name="robots" content="index, follow" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content={siteName} />
+	<meta property="og:title" content={pageTitle} />
+	<meta property="og:description" content={pageDescription} />
+	<meta property="og:url" content={`${siteUrl}/plans`} />
+	<meta property="og:image" content={`${siteUrl}/icon-512.png`} />
+	<meta property="og:locale" content="fr_FR" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={pageTitle} />
+	<meta name="twitter:description" content={pageDescription} />
+	<meta name="twitter:image" content={`${siteUrl}/icon-512.png`} />
+	<script type="application/ld+json">
+		{JSON.stringify(structuredData)}
+	</script>
+</svelte:head>
 
 <div class="container">
 	<div class="header">

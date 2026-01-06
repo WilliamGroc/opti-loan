@@ -20,6 +20,35 @@
 		FinancingPlansList
 	} from '$lib/components';
 
+	const siteName = 'Calcul Prêt';
+	const siteUrl = 'https://www.calcul-pret.com';
+	const pageTitle = 'Calculateur de prêt immobilier | Calcul-pret.com';
+	const pageDescription =
+		"Calculez vos mensualités, intérêts et tableaux d'amortissement en quelques secondes et optimisez vos plans de financement.";
+
+	const structuredData = {
+		'@context': 'https://schema.org',
+		'@type': 'SoftwareApplication',
+		name: 'Calcul Prêt - Calculateur de prêt immobilier',
+		description: pageDescription,
+		applicationCategory: 'FinanceApplication',
+		operatingSystem: 'Web',
+		url: `${siteUrl}/`,
+		offers: {
+			'@type': 'Offer',
+			price: '0',
+			priceCurrency: 'EUR'
+		},
+		creator: {
+			'@type': 'Person',
+			name: 'William Groc'
+		},
+		audience: {
+			'@type': 'Audience',
+			name: 'Particuliers et investisseurs immobiliers'
+		}
+	};
+
 	let amount = 200000;
 	let annualRate = 1.5;
 	let durationYears = 20;
@@ -127,6 +156,28 @@
 		handleCalculateLoan();
 	}
 </script>
+
+<svelte:head>
+	<title>{pageTitle}</title>
+	<link rel="canonical" href={`${siteUrl}/`} />
+	<meta name="description" content={pageDescription} />
+	<meta name="robots" content="index, follow" />
+	<meta name="author" content="William Groc" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content={siteName} />
+	<meta property="og:title" content={pageTitle} />
+	<meta property="og:description" content={pageDescription} />
+	<meta property="og:url" content={`${siteUrl}/`} />
+	<meta property="og:image" content={`${siteUrl}/icon-512.png`} />
+	<meta property="og:locale" content="fr_FR" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={pageTitle} />
+	<meta name="twitter:description" content={pageDescription} />
+	<meta name="twitter:image" content={`${siteUrl}/icon-512.png`} />
+	<script type="application/ld+json">
+		{JSON.stringify(structuredData)}
+	</script>
+</svelte:head>
 
 <div class="container">
 	<div class="page-header">

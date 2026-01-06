@@ -1,3 +1,6 @@
-# allow crawling everything by default
+# robots.txt for Calcul Prêt
 User-agent: *
-Disallow:
+Allow: /
+
+# Point crawlers to the sitemap
+Sitemap: https://www.calcul-pret.com/sitemap.xml
