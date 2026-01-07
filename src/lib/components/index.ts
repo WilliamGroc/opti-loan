@@ -13,3 +13,4 @@ export { default as FinancingPlanForm } from './FinancingPlanForm.svelte';
 export { default as FinancingPlanCard } from './FinancingPlanCard.svelte';
 export { default as FinancingPlansList } from './FinancingPlansList.svelte';
 export { default as PWAInstallPrompt } from './PWAInstallPrompt.svelte';
+export { default as ParameterImpactAnalysis } from './ParameterImpactAnalysis.svelte';

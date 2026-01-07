@@ -17,7 +17,8 @@
 		SavedLoansList,
 		ResultsCards,
 		FinancingPlanForm,
-		FinancingPlansList
+		FinancingPlansList,
+		ParameterImpactAnalysis
 	} from '$lib/components';
 
 	const siteName = 'Calcul Prêt';
@@ -72,6 +73,8 @@
 	let loanName = '';
 
 	let financingPlans: FinancingPlan[] = [];
+
+	let hiddenAmortization = true;
 
 	function handleSaveLoan() {
 		if (!loanName.trim()) {
@@ -222,6 +225,17 @@
 		onClone={handleCloneLoan}
 	/>
 
+	<ResultsCards {monthlyPayment} {totalCost} {totalInterest} {durationYears} />
+
+	<ParameterImpactAnalysis
+		baseAmount={amount}
+		baseAnnualRate={annualRate}
+		baseDurationYears={durationYears}
+		{startDate}
+		{calculationMode}
+		{paymentPeriods}
+	/>
+
 	<div class="financing-plan">
 		<h2>Plan de Financement</h2>
 
@@ -230,42 +244,49 @@
 		<FinancingPlansList bind:financingPlans onDelete={handleDeleteFinancingPlan} />
 	</div>
 
-	<ResultsCards {monthlyPayment} {totalCost} {totalInterest} {durationYears} />
-
 	<div class="amortization">
-		<h2>Tableau d'amortissement</h2>
-		<div class="table-wrapper">
-			<table>
-				<thead>
-					<tr>
-						<th>Mois</th>
-						<th>Date</th>
-						<th>Mensualité</th>
-						<th>Capital</th>
-						<th>Intérêts</th>
-						<th>Restant dû</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each amortizationTable as row, i}
-						{#if i < 12 || i >= amortizationTable.length - 12 || i % 12 === 0}
-							<tr>
-								<td>{row.month}</td>
-								<td>{format(row.date, 'MMM yyyy', { locale: fr })}</td>
-								<td>{row.monthlyPayment.toFixed(2)} €</td>
-								<td>{row.principal.toFixed(2)} €</td>
-								<td>{row.interest.toFixed(2)} €</td>
-								<td>{row.remaining.toFixed(2)} €</td>
-							</tr>
-						{:else if i === 12}
-							<tr class="ellipsis">
-								<td colspan="6">...</td>
-							</tr>
-						{/if}
-					{/each}
-				</tbody>
-			</table>
+		<div class="flex justify-between">
+			<h2>Tableau d'amortissement</h2>
+			<button on:click={() => (hiddenAmortization = !hiddenAmortization)}>
+				{#if hiddenAmortization}👁️ Montrer{:else}🙈 Cacher{/if}
+			</button>
 		</div>
+		{#if hiddenAmortization}
+			<p>Cliquez sur "Montrer" pour afficher le tableau d'amortissement.</p>
+		{:else}
+			<div class="table-wrapper">
+				<table>
+					<thead>
+						<tr>
+							<th>Mois</th>
+							<th>Date</th>
+							<th>Mensualité</th>
+							<th>Capital</th>
+							<th>Intérêts</th>
+							<th>Restant dû</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each amortizationTable as row, i}
+							{#if i < 12 || i >= amortizationTable.length - 12 || i % 12 === 0}
+								<tr>
+									<td>{row.month}</td>
+									<td>{format(row.date, 'MMM yyyy', { locale: fr })}</td>
+									<td>{row.monthlyPayment.toFixed(2)} €</td>
+									<td>{row.principal.toFixed(2)} €</td>
+									<td>{row.interest.toFixed(2)} €</td>
+									<td>{row.remaining.toFixed(2)} €</td>
+								</tr>
+							{:else if i === 12}
+								<tr class="ellipsis">
+									<td colspan="6">...</td>
+								</tr>
+							{/if}
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
 	</div>
 </div>
 
