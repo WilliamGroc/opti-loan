@@ -186,6 +186,13 @@
 	<div class="page-header">
 		<h1>Calculateur de Prêt</h1>
 		<nav class="nav-links">
+			<a
+				href="/estimation"
+				class="btn-nav btn-estimation"
+				title="Estimer le coût global d'un projet"
+			>
+				🏠 Estimation
+			</a>
 			<a href="/plans" class="btn-nav" title="Voir les plans de financement"> 📋 Mes Plans </a>
 			<a
 				href="mailto:william.groc@gmail.com?subject=Feedback%20OptiLoan"
@@ -352,6 +359,15 @@
 
 	.btn-feedback:hover {
 		background: linear-gradient(135deg, #059669 0%, #047857 100%);
+	}
+
+	.btn-estimation {
+		background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+		color: white;
+	}
+
+	.btn-estimation:hover {
+		background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
 	}
 
 	.btn-donate {
