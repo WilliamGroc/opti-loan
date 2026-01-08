@@ -16,6 +16,9 @@
 		guaranteePercent: number;
 		loanRate: number;
 		loanDuration: number;
+		monthlySalary: number;
+		otherIncome: number;
+		otherLoans: number;
 		saveDate: string;
 	}
 
@@ -40,6 +43,11 @@
 	let loanRate = 1.5;
 	let loanDuration = 20;
 
+	// Revenus de l'emprunteur
+	let monthlySalary = 3000;
+	let otherIncome = 0;
+	let otherLoans = 0;
+
 	// Sauvegarde des projets
 	let projectName = '';
 	let savedProjects: SavedProject[] = [];
@@ -59,6 +67,11 @@
 		totalInterest: number;
 		totalCostWithInterest: number;
 		insuranceTotal: number;
+		totalMonthlyIncome: number;
+		debtRatio: number;
+		maxMonthlyPayment: number;
+		maxLoanCapacity: number;
+		maxPropertyValue: number;
 	}
 
 	let result: EstimationResult;
@@ -113,6 +126,58 @@
 		// Coût total du projet (sans intérêts)
 		const totalProjectCost = propertyValue + totalInitialCost;
 
+		// Calcul de la capacité d'emprunt et du taux d'endettement
+		const totalMonthlyIncome = monthlySalary + otherIncome;
+		const maxMonthlyPayment =
+			totalMonthlyIncome > 0 ? (totalMonthlyIncome * 33) / 100 - otherLoans : 0;
+		const debtRatio =
+			totalMonthlyIncome > 0 ? ((monthlyPayment + otherLoans) / totalMonthlyIncome) * 100 : 0;
+
+		// Calcul de la capacité d'emprunt maximale basée sur la mensualité max
+		let maxLoanCapacity = 0;
+		let maxPropertyValue = 0;
+
+		if (maxMonthlyPayment > 0 && loanRate > 0) {
+			const monthlyRate = loanRate / 100 / 12;
+			const totalMonths = loanDuration * 12;
+
+			// Capacité d'emprunt = capital qu'on peut emprunter avec la mensualité max
+			if (monthlyRate === 0) {
+				maxLoanCapacity = maxMonthlyPayment * totalMonths;
+			} else {
+				maxLoanCapacity =
+					(maxMonthlyPayment * (Math.pow(1 + monthlyRate, totalMonths) - 1)) /
+					(monthlyRate * Math.pow(1 + monthlyRate, totalMonths));
+			}
+
+			// Calcul du prix maximum du bien en tenant compte de tous les frais
+			// Formule: maxLoanCapacity = Prix + Frais - Apport
+			// Où Frais = Notaire(Prix) + Dossier(Emprunt) + Garantie(Emprunt)
+			// Et Emprunt = Prix + Frais - Apport
+			// Résolution itérative pour trouver le prix maximum
+
+			const notaryPercent = propertyType === 'new' ? notaryFeesPercentNew : notaryFeesPercentOld;
+
+			// Approximation par itération (converge rapidement)
+			let estimatedPrice = maxLoanCapacity + downPayment;
+			for (let i = 0; i < 10; i++) {
+				const estimatedNotaryFees = (estimatedPrice * notaryPercent) / 100;
+				const estimatedLoanAmount = estimatedPrice - downPayment;
+				const estimatedFileFees = (estimatedLoanAmount * fileFeePercent) / 100;
+				const estimatedGuarantee = (estimatedLoanAmount * guaranteePercent) / 100;
+				const estimatedTotalFees = estimatedNotaryFees + estimatedFileFees + estimatedGuarantee;
+				const estimatedTotalToFinance = estimatedPrice + estimatedTotalFees - downPayment;
+
+				// Ajuster le prix en fonction de l'écart
+				if (estimatedTotalToFinance > maxLoanCapacity) {
+					estimatedPrice = estimatedPrice * (maxLoanCapacity / estimatedTotalToFinance);
+				} else {
+					break;
+				}
+			}
+			maxPropertyValue = Math.floor(estimatedPrice);
+		}
+
 		return {
 			propertyValue,
 			downPayment,
@@ -127,7 +192,12 @@
 			monthlyPayment,
 			totalInterest,
 			totalCostWithInterest,
-			insuranceTotal
+			insuranceTotal,
+			totalMonthlyIncome,
+			debtRatio,
+			maxMonthlyPayment,
+			maxLoanCapacity,
+			maxPropertyValue
 		};
 	}
 
@@ -143,6 +213,9 @@
 		guaranteePercent;
 		loanRate;
 		loanDuration;
+		monthlySalary;
+		otherIncome;
+		otherLoans;
 		result = calculateEstimation();
 	}
 
@@ -176,6 +249,9 @@
 			guaranteePercent,
 			loanRate,
 			loanDuration,
+			monthlySalary,
+			otherIncome,
+			otherLoans,
 			saveDate: new Date().toISOString()
 		};
 
@@ -196,6 +272,9 @@
 		guaranteePercent = project.guaranteePercent;
 		loanRate = project.loanRate;
 		loanDuration = project.loanDuration;
+		monthlySalary = project.monthlySalary || 0;
+		otherIncome = project.otherIncome || 0;
+		otherLoans = project.otherLoans || 0;
 	}
 
 	function deleteProject(id: string) {
@@ -320,10 +399,10 @@
 			</div>
 
 			<div class="form-group">
-				<label>
+				<label for="property-type">
 					<span class="label-text">🏗️ Type de bien</span>
 				</label>
-				<div class="radio-group">
+				<div class="radio-group" id="property-type">
 					<label class="radio-label">
 						<input type="radio" bind:group={propertyType} value="new" />
 						<span>Neuf</span>
@@ -456,6 +535,57 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="form-section">
+		<h2>💼 Vos revenus</h2>
+
+		<div class="form-grid">
+			<div class="form-group">
+				<label for="monthly-salary">
+					<span class="label-text">💵 Salaire mensuel net</span>
+				</label>
+				<input
+					id="monthly-salary"
+					type="number"
+					bind:value={monthlySalary}
+					min="0"
+					step="100"
+					class="input-field"
+				/>
+				<div class="input-hint">Votre revenu mensuel net</div>
+			</div>
+
+			<div class="form-group">
+				<label for="other-income">
+					<span class="label-text">💰 Autres revenus mensuels</span>
+				</label>
+				<input
+					id="other-income"
+					type="number"
+					bind:value={otherIncome}
+					min="0"
+					step="100"
+					class="input-field"
+				/>
+				<div class="input-hint">Revenus locatifs, allocations, etc.</div>
+			</div>
+
+			<div class="form-group">
+				<label for="other-loans">
+					<span class="label-text">💳 Autres crédits mensuels</span>
+				</label>
+				<input
+					id="other-loans"
+					type="number"
+					bind:value={otherLoans}
+					min="0"
+					step="50"
+					class="input-field"
+				/>
+				<div class="input-hint">Mensualités d'autres crédits en cours</div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <div class="results-section">
@@ -529,6 +659,65 @@
 			</div>
 		</div>
 
+		{#if result.totalMonthlyIncome > 0}
+			<div class="result-card {result.debtRatio <= 33 ? 'success' : 'debt-warning'}">
+				<div class="card-icon">{result.debtRatio <= 33 ? '✅' : '⚠️'}</div>
+				<div class="card-content">
+					<div class="card-label">Taux d'endettement</div>
+					<div class="card-value">{result.debtRatio.toFixed(1)}%</div>
+					<div class="card-detail">
+						{#if result.debtRatio <= 33}
+							✅ Dans la norme (≤ 33%)
+						{:else}
+							⚠️ Au-dessus de la norme (33%)
+						{/if}
+					</div>
+				</div>
+			</div>
+
+			<div class="result-card">
+				<div class="card-icon">💰</div>
+				<div class="card-content">
+					<div class="card-label">Revenus mensuels totaux</div>
+					<div class="card-value">{result.totalMonthlyIncome.toLocaleString('fr-FR')} €</div>
+					<div class="card-detail">
+						Capacité max: {result.maxMonthlyPayment.toLocaleString('fr-FR')} €/mois
+					</div>
+				</div>
+			</div>
+
+			<div class="result-card highlight">
+				<div class="card-icon">🏦</div>
+				<div class="card-content">
+					<div class="card-label">Capacité d'emprunt maximale</div>
+					<div class="card-value">{result.maxLoanCapacity.toLocaleString('fr-FR')} €</div>
+					<div class="card-detail">
+						Basée sur {result.maxMonthlyPayment.toLocaleString('fr-FR')} €/mois
+					</div>
+				</div>
+			</div>
+
+			<div
+				class="result-card {result.maxPropertyValue >= propertyValue ? 'success' : 'debt-warning'}"
+			>
+				<div class="card-icon">{result.maxPropertyValue >= propertyValue ? '🏠' : '⚠️'}</div>
+				<div class="card-content">
+					<div class="card-label">Prix maximum du bien</div>
+					<div class="card-value">{result.maxPropertyValue.toLocaleString('fr-FR')} €</div>
+					<div class="card-detail">
+						{#if result.maxPropertyValue >= propertyValue}
+							✅ Vous pouvez acheter ce bien (avec apport {downPayment.toLocaleString('fr-FR')}
+							€)
+						{:else}
+							⚠️ Au-dessus de votre capacité ({(
+								propertyValue - result.maxPropertyValue
+							).toLocaleString('fr-FR')} € de trop)
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<div class="result-card">
 			<div class="card-icon">📈</div>
 			<div class="card-content">
@@ -582,6 +771,21 @@
 			<li>
 				<strong>Frais variables :</strong> Les pourcentages indiqués sont des fourchettes moyennes. Les
 				frais réels peuvent varier selon les banques et notaires.
+			</li>
+			<li>
+				<strong>Taux d'endettement :</strong> Rapport entre vos mensualités (prêt immobilier + autres
+				crédits) et vos revenus mensuels. La norme bancaire est de 33% maximum. Un taux supérieur peut
+				compliquer l'obtention du prêt.
+			</li>
+			<li>
+				<strong>Capacité d'emprunt maximale :</strong> Montant total que vous pouvez emprunter en respectant
+				la règle des 33% d'endettement, calculé selon vos revenus, vos autres crédits, le taux d'intérêt
+				et la durée du prêt.
+			</li>
+			<li>
+				<strong>Prix maximum du bien :</strong> Prix le plus élevé que vous pouvez vous permettre en tenant
+				compte de TOUS les frais annexes (notaire, dossier, garantie) et de votre apport personnel. Ce
+				calcul intègre la complexité que les frais dépendent à la fois du prix du bien et du montant emprunté.
 			</li>
 		</ul>
 	</div>
@@ -750,6 +954,16 @@
 		background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
 	}
 
+	.result-card.success {
+		border-color: #10b981;
+		background: linear-gradient(135deg, #d1fae5 0%, #ffffff 100%);
+	}
+
+	.result-card.debt-warning {
+		border-color: #ef4444;
+		background: linear-gradient(135deg, #fee2e2 0%, #ffffff 100%);
+	}
+
 	.card-icon {
 		font-size: 2rem;
 		flex-shrink: 0;
@@ -777,22 +991,10 @@
 		color: #999;
 	}
 
-	.summary-cards {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-		gap: 1.5rem;
-		margin-bottom: 2rem;
-	}
-
 	.summary-card {
 		padding: 2rem;
 		border-radius: 12px;
 		text-align: center;
-	}
-
-	.summary-card.success {
-		background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-		color: white;
 	}
 
 	.summary-card.warning {
@@ -994,10 +1196,6 @@
 		}
 
 		.results-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.summary-cards {
 			grid-template-columns: 1fr;
 		}
 

@@ -3,14 +3,14 @@
 
 	const siteName = 'Calcul Prêt';
 	const siteUrl = 'https://www.calcul-pret.com';
-	const pageTitle = 'Estimation plan de financement immobilier | Calcul-pret.com';
+	const pageTitle = "Estimation Capacité d'Emprunt & Prix Maximum Immobilier | Calcul-pret.com";
 	const pageDescription =
-		"Estimez le coût global de votre projet d'achat immobilier : frais de notaire, frais de dossier, assurance emprunteur, garantie, intérêts et mensualités. Calculateur gratuit et complet.";
+		"Calculez votre capacité d'emprunt maximale et le prix maximum du bien que vous pouvez acheter. Estimation complète incluant frais de notaire, dossier, garantie, assurance et taux d'endettement. Outil gratuit et précis.";
 
 	const structuredData = {
 		'@context': 'https://schema.org',
 		'@type': 'WebPage',
-		name: 'Estimation Plan de Financement Immobilier',
+		name: "Estimation Capacité d'Emprunt et Prix Maximum Immobilier",
 		description: pageDescription,
 		url: `${siteUrl}/estimation`,
 		isPartOf: {
@@ -20,20 +20,31 @@
 		},
 		mainEntity: {
 			'@type': 'FinancialProduct',
-			name: 'Estimation de prêt immobilier',
+			name: "Calculateur de capacité d'emprunt immobilier",
 			description:
-				"Outil d'estimation complète pour calculer tous les frais liés à un achat immobilier en résidence principale",
+				"Outil complet pour calculer votre capacité d'emprunt maximale et le prix maximum du bien que vous pouvez acheter, en tenant compte de tous les frais annexes et du taux d'endettement",
 			category: 'Prêt immobilier',
 			featureList: [
+				"Calcul de la capacité d'emprunt maximale",
+				'Calcul du prix maximum du bien achetable',
+				"Taux d'endettement en temps réel",
+				'Intégration des revenus et crédits en cours',
 				'Calcul des frais de notaire (neuf et ancien)',
-				'Frais de dossier',
+				'Frais de dossier bancaire',
 				'Assurance emprunteur',
-				'Garantie',
+				'Garantie de prêt',
 				'Calcul des mensualités',
-				'Calcul des intérêts',
-				'Coût total du projet',
-				'Sauvegarde de projets'
-			]
+				'Calcul des intérêts totaux',
+				'Coût global du projet',
+				'Sauvegarde de projets multiples'
+			],
+			offers: {
+				'@type': 'Offer',
+				price: '0',
+				priceCurrency: 'EUR',
+				availability: 'https://schema.org/InStock',
+				description: 'Outil gratuit et sans engagement'
+			}
 		}
 	};
 </script>
@@ -46,7 +57,7 @@
 	<meta name="author" content="William Groc" />
 	<meta
 		name="keywords"
-		content="estimation prêt immobilier, frais notaire, frais dossier, assurance emprunteur, garantie prêt, calcul mensualité, intérêts prêt, achat immobilier, financement immobilier, résidence principale"
+		content="capacité emprunt, prix maximum immobilier, taux endettement, estimation prêt immobilier, frais notaire, frais dossier, assurance emprunteur, garantie prêt, calcul mensualité, intérêts prêt, achat immobilier, financement immobilier, résidence principale, revenus emprunteur, 33% endettement, simulateur capacité achat"
 	/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content={siteName} />
