@@ -44,6 +44,8 @@ export interface AmortizationRow {
   totalPrincipal: number;
   totalInterest: number;
   totalRemaining: number;
+  remainingBalance: number;
+  loanDetails: LoanBalance[];
 }
 
 export interface LoanBalance {
@@ -51,4 +53,5 @@ export interface LoanBalance {
   remaining: number;
   startMonth: number;
   endMonth: number;
+  remainingBalance: number;
 }

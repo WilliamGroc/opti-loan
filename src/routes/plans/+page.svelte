@@ -53,6 +53,10 @@
 	let showOptimizedPlan = false;
 	let optimizationSavings = 0;
 	let showPlanAmortizationTable = false;
+	let showCustomAllocation = false;
+	let customAllocationTable: AmortizationRow[] = [];
+	let customAllocationWeights: number[] = [];
+	let customAllocationSavings = 0;
 
 	// Delete financing plan
 	function handleDeletePlan(index: number) {
@@ -100,6 +104,155 @@
 			console.error("Erreur lors de l'optimisation:", error);
 			alert("Une erreur s'est produite lors de l'optimisation du plan");
 		}
+	}
+
+	// Initialize custom allocation weights for a plan
+	function initializeCustomAllocation(plan: FinancingPlan) {
+		// Equal weights by default
+		customAllocationWeights = plan.selectedLoans.map(() => 100 / plan.selectedLoans.length);
+	}
+
+	// Handle custom allocation
+	function handleCustomAllocation(plan: FinancingPlan) {
+		initializeCustomAllocation(plan);
+		showCustomAllocation = true;
+		showPlanAmortizationTable = false;
+		showOptimizedPlan = false;
+		calculateCustomAllocation(plan);
+	}
+
+	// Calculate amortization with custom allocation weights
+	function calculateCustomAllocation(plan: FinancingPlan) {
+		try {
+			// Normalize weights to sum to 1
+			const totalWeight = customAllocationWeights.reduce((sum, w) => sum + w, 0);
+			const normalizedWeights = customAllocationWeights.map((w) => w / totalWeight);
+
+			// Calculate total monthly budget
+			const totalMonthlyBudget = plan.selectedLoans.reduce(
+				(sum, loan) => sum + loan.monthlyPayment,
+				0
+			);
+
+			// Create a working copy of loans
+			let remainingPrincipals = plan.selectedLoans.map((loan) => loan.amount);
+			const monthlyRates = plan.selectedLoans.map((loan) => loan.annualRate / 100 / 12);
+			const table: AmortizationRow[] = [];
+			let month = 0;
+
+			while (remainingPrincipals.some((p) => p > 0.01) && month < 600) {
+				month++;
+				let monthlyInterests = remainingPrincipals.map(
+					(principal, i) => principal * monthlyRates[i]
+				);
+				let totalInterest = monthlyInterests.reduce((sum, int) => sum + int, 0);
+
+				// Available capital after paying all interests
+				let availableCapital = totalMonthlyBudget - totalInterest;
+
+				if (availableCapital <= 0) {
+					// Not enough to pay interests, stop
+					break;
+				}
+
+				// Allocate capital according to custom weights
+				let capitalPayments = normalizedWeights.map((weight, i) => {
+					if (remainingPrincipals[i] <= 0) return 0;
+					return Math.min(weight * availableCapital, remainingPrincipals[i]);
+				});
+
+				// Ensure we don't overpay
+				let totalCapitalPayment = capitalPayments.reduce((sum, p) => sum + p, 0);
+				if (totalCapitalPayment > availableCapital) {
+					const ratio = availableCapital / totalCapitalPayment;
+					capitalPayments = capitalPayments.map((p) => p * ratio);
+				}
+
+				// Update remaining principals
+				remainingPrincipals = remainingPrincipals.map((principal, i) =>
+					Math.max(0, principal - capitalPayments[i])
+				);
+
+				const actualTotalPayment = totalInterest + capitalPayments.reduce((sum, p) => sum + p, 0);
+
+				table.push({
+					month,
+					date: new Date(),
+					totalMonthlyPayment: actualTotalPayment,
+					totalInterest,
+					totalPrincipal: capitalPayments.reduce((sum, p) => sum + p, 0),
+					remainingBalance: remainingPrincipals.reduce((sum, p) => sum + p, 0),
+					totalRemaining: remainingPrincipals.reduce((sum, p) => sum + p, 0),
+					loansData: plan.selectedLoans.map((loan, i) => ({
+						name: loan.name,
+						monthlyPayment: monthlyInterests[i] + capitalPayments[i],
+						interest: monthlyInterests[i],
+						principal: capitalPayments[i],
+						remaining: remainingPrincipals[i]
+					})),
+					loanDetails: plan.selectedLoans.map((loan, i) => ({
+						loan: loan,
+						remaining: remainingPrincipals[i],
+						startMonth: month,
+						endMonth: month,
+						remainingBalance: remainingPrincipals[i]
+					}))
+				});
+			}
+
+			customAllocationTable = table;
+
+			// Calculate savings compared to original plan
+			const originalTotalInterest = planAmortizationTable.reduce(
+				(sum, row) => sum + row.totalInterest,
+				0
+			);
+			const customTotalInterest = customAllocationTable.reduce(
+				(sum, row) => sum + row.totalInterest,
+				0
+			);
+			customAllocationSavings = originalTotalInterest - customTotalInterest;
+		} catch (error) {
+			console.error("Erreur lors du calcul de l'allocation personnalisée:", error);
+			alert("Une erreur s'est produite lors du calcul");
+		}
+	}
+
+	// Update custom allocation when weights change
+	function updateCustomAllocation(plan: FinancingPlan) {
+		calculateCustomAllocation(plan);
+	}
+
+	// Handle slider change and adjust others to maintain 100% total
+	function handleSliderChange(changedIndex: number, plan: FinancingPlan) {
+		const newValue = customAllocationWeights[changedIndex];
+		const numLoans = plan.selectedLoans.length;
+
+		// Calculate the remaining weight to distribute
+		const remainingWeight = 100 - newValue;
+
+		// Get the sum of other weights (excluding the changed one)
+		const otherWeightsSum = customAllocationWeights.reduce(
+			(sum, w, i) => (i !== changedIndex ? sum + w : sum),
+			0
+		);
+
+		// Adjust other weights proportionally to maintain 100% total
+		if (otherWeightsSum > 0) {
+			customAllocationWeights = customAllocationWeights.map((w, i) => {
+				if (i === changedIndex) return newValue;
+				// Distribute remaining weight proportionally
+				return (w / otherWeightsSum) * remainingWeight;
+			});
+		} else {
+			// If all other weights are 0, distribute equally
+			const equalShare = remainingWeight / (numLoans - 1);
+			customAllocationWeights = customAllocationWeights.map((w, i) =>
+				i === changedIndex ? newValue : equalShare
+			);
+		}
+
+		calculateCustomAllocation(plan);
 	}
 
 	onMount(() => {
@@ -284,6 +437,9 @@
 									<Button variant="success" on:click={() => handleOptimizePlan(plan)}>
 										⚡ Optimiser le plan
 									</Button>
+									<Button variant="primary" on:click={() => handleCustomAllocation(plan)}>
+										🎯 Allocation personnalisée
+									</Button>
 								</div>
 
 								<Button
@@ -343,6 +499,107 @@
 
 										<AmortizationTable
 											data={optimizedPlanAmortizationTable}
+											showFull={showFullOptimizedTable}
+											variant="optimized"
+											onToggleFull={() => (showFullOptimizedTable = !showFullOptimizedTable)}
+										/>
+									</div>
+								{/if}
+
+								{#if showCustomAllocation && selectedPlanIndex === index}
+									<div class="custom-allocation-section">
+										<h5>🎯 Allocation Personnalisée du Capital</h5>
+
+										<div class="comparison-note">
+											<strong>💡 Personnalisez votre stratégie</strong>
+											<p>
+												Ajustez les curseurs ci-dessous pour définir la priorité de remboursement de
+												chaque prêt. La somme totale reste toujours à 100% : lorsque vous augmentez
+												un prêt, les autres sont automatiquement ajustés proportionnellement.
+											</p>
+										</div>
+
+										<div class="allocation-controls">
+											<div class="total-allocation">
+												<strong>Répartition totale :</strong>
+												<span class="total-value">
+													{customAllocationWeights.reduce((sum, w) => sum + w, 0).toFixed(1)}%
+												</span>
+											</div>
+											{#each plan.selectedLoans as loan, loanIndex}
+												<div class="allocation-control">
+													<div class="allocation-header">
+														<span class="loan-label">{loan.name}</span>
+														<span class="allocation-value"
+															>{customAllocationWeights[loanIndex]?.toFixed(1) || 0}%</span
+														>
+													</div>
+													<input
+														type="range"
+														min="0"
+														max="100"
+														step="0.5"
+														bind:value={customAllocationWeights[loanIndex]}
+														on:input={() => handleSliderChange(loanIndex, plan)}
+														class="allocation-slider"
+													/>
+													<div class="loan-info">
+														<span>Taux: {loan.annualRate}%</span>
+														<span>Capital: {loan.amount.toLocaleString('fr-FR')} €</span>
+													</div>
+												</div>
+											{/each}
+										</div>
+
+										{#if customAllocationSavings !== 0}
+											<div class="allocation-alert">
+												{#if customAllocationSavings > 0}
+													<div class="alert-positive">
+														✅ Économie de {customAllocationSavings.toFixed(2)} € par rapport au plan
+														original
+													</div>
+												{:else}
+													<div class="alert-negative">
+														⚠️ Coût supplémentaire de {Math.abs(customAllocationSavings).toFixed(2)} €
+														par rapport au plan original
+													</div>
+												{/if}
+											</div>
+										{/if}
+
+										<div class="detail-summary">
+											<SummaryCard
+												label="Intérêts originaux"
+												value="{planAmortizationTable
+													.reduce((sum, row) => sum + row.totalInterest, 0)
+													.toFixed(2)} €"
+											/>
+											<SummaryCard
+												label="Intérêts avec allocation"
+												value="{customAllocationTable
+													.reduce((sum, row) => sum + row.totalInterest, 0)
+													.toFixed(2)} €"
+												variant={customAllocationSavings > 0 ? 'optimized' : 'default'}
+											/>
+											<SummaryCard
+												label={customAllocationSavings > 0 ? 'Économie' : 'Différence'}
+												value="{customAllocationSavings > 0 ? '-' : '+'}{Math.abs(
+													customAllocationSavings
+												).toFixed(2)} €"
+												variant={customAllocationSavings > 0 ? 'savings' : 'default'}
+											/>
+											<SummaryCard
+												label="Durée"
+												value="{Math.ceil(
+													customAllocationTable.length / 12
+												)} ans ({customAllocationTable.length} mois)"
+											/>
+										</div>
+
+										<LoanComparisonChart data={customAllocationTable} />
+
+										<AmortizationTable
+											data={customAllocationTable}
 											showFull={showFullOptimizedTable}
 											variant="optimized"
 											onToggleFull={() => (showFullOptimizedTable = !showFullOptimizedTable)}
@@ -584,6 +841,152 @@
 		color: #555;
 		margin: 0;
 		line-height: 1.6;
+	}
+
+	.custom-allocation-section {
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 3px solid #667eea;
+	}
+
+	.custom-allocation-section h5 {
+		color: #667eea;
+		font-size: 1.2rem;
+		margin: 0 0 1rem 0;
+	}
+
+	.allocation-controls {
+		background: #f8f9fa;
+		border-radius: 8px;
+		padding: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.total-allocation {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem;
+		background: white;
+		border-radius: 8px;
+		margin-bottom: 1.5rem;
+		border: 2px solid #667eea;
+	}
+
+	.total-allocation strong {
+		color: #333;
+		font-size: 1rem;
+	}
+
+	.total-value {
+		font-size: 1.3rem;
+		font-weight: 700;
+		color: #667eea;
+	}
+
+	.allocation-control {
+		margin-bottom: 1.5rem;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid #e0e0e0;
+	}
+
+	.allocation-control:last-child {
+		margin-bottom: 0;
+		padding-bottom: 0;
+		border-bottom: none;
+	}
+
+	.allocation-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.5rem;
+	}
+
+	.loan-label {
+		font-weight: 600;
+		color: #333;
+		font-size: 1rem;
+	}
+
+	.allocation-value {
+		font-weight: 700;
+		color: #667eea;
+		font-size: 1.1rem;
+	}
+
+	.allocation-slider {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		outline: none;
+		background: linear-gradient(to right, #e0e0e0 0%, #667eea 50%, #28a745 100%);
+		-webkit-appearance: none;
+		appearance: none;
+		cursor: pointer;
+	}
+
+	.allocation-slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: #667eea;
+		cursor: pointer;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		transition: all 0.2s;
+	}
+
+	.allocation-slider::-webkit-slider-thumb:hover {
+		transform: scale(1.2);
+		background: #5568d3;
+	}
+
+	.allocation-slider::-moz-range-thumb {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: #667eea;
+		cursor: pointer;
+		border: none;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		transition: all 0.2s;
+	}
+
+	.allocation-slider::-moz-range-thumb:hover {
+		transform: scale(1.2);
+		background: #5568d3;
+	}
+
+	.loan-info {
+		display: flex;
+		justify-content: space-between;
+		margin-top: 0.5rem;
+		font-size: 0.85rem;
+		color: #666;
+	}
+
+	.allocation-alert {
+		margin-bottom: 1.5rem;
+	}
+
+	.alert-positive {
+		background: #d4edda;
+		border: 1px solid #c3e6cb;
+		color: #155724;
+		padding: 1rem;
+		border-radius: 8px;
+		font-weight: 600;
+	}
+
+	.alert-negative {
+		background: #fff3cd;
+		border: 1px solid #ffeaa7;
+		color: #856404;
+		padding: 1rem;
+		border-radius: 8px;
+		font-weight: 600;
 	}
 
 	@media (max-width: 768px) {
