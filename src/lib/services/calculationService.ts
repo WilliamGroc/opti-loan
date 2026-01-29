@@ -4,7 +4,8 @@
 
 import { addMonths, parse } from 'date-fns';
 import type { MonthlyPaymentPeriod } from './types';
-import { getMonthlyPaymentForMonth } from './loanService';
+import { getMonthlyPaymentForMonth } from './paymentService';
+import { getMonthlyRate, calculateStandardMonthlyPayment } from './utils';
 
 export interface SingleLoanAmortizationRow {
   month: number;
@@ -34,19 +35,13 @@ export function calculateLoan(
   calculationMode: 'payment' | 'duration' | 'variable',
   paymentPeriods: MonthlyPaymentPeriod[] = []
 ): LoanCalculationResult {
-  const monthlyRate = annualRate / 100 / 12;
+  const monthlyRate = getMonthlyRate(annualRate);
   const totalMonths = durationYears * 12;
 
   // Calculer la mensualité si en mode "payment"
   let finalMonthlyPayment = monthlyPayment;
   if (calculationMode === 'payment') {
-    if (monthlyRate === 0) {
-      finalMonthlyPayment = amount / totalMonths;
-    } else {
-      finalMonthlyPayment =
-        (amount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
-        (Math.pow(1 + monthlyRate, totalMonths) - 1);
-    }
+    finalMonthlyPayment = calculateStandardMonthlyPayment(amount, annualRate, durationYears);
   }
 
   // Générer le tableau d'amortissement

@@ -4,25 +4,15 @@
 
 import { format } from 'date-fns';
 import type { SavedLoan, MonthlyPaymentPeriod } from './types';
-
-const LOCAL_STORAGE_KEY = 'opti-loan-prets';
+import { loadFromStorage, saveToStorage, exportAsJSON } from './storageService';
+import { calculateStandardMonthlyPayment } from './utils';
+import { getMonthlyPaymentForMonth } from './paymentService';
 
 /**
  * Charge les prêts depuis le localStorage
  */
 export function loadLoans(): SavedLoan[] {
-  if (typeof window !== 'undefined') {
-    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (data) {
-      try {
-        return JSON.parse(data);
-      } catch (e) {
-        console.error('Erreur lors du chargement des prêts:', e);
-        return [];
-      }
-    }
-  }
-  return [];
+  return loadFromStorage<SavedLoan>('LOANS');
 }
 
 /**
@@ -55,7 +45,7 @@ export function saveLoan(
   };
 
   const updatedLoans = [newLoan, ...loans];
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedLoans));
+  saveToStorage('LOANS', updatedLoans);
   return updatedLoans;
 }
 
@@ -64,7 +54,7 @@ export function saveLoan(
  */
 export function deleteLoan(loans: SavedLoan[], id: string): SavedLoan[] {
   const updatedLoans = loans.filter((p) => p.id !== id);
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedLoans));
+  saveToStorage('LOANS', updatedLoans);
   return updatedLoans;
 }
 
@@ -80,7 +70,7 @@ export function cloneLoan(loans: SavedLoan[], loan: SavedLoan, newName: string):
   };
 
   const updatedLoans = [clonedLoan, ...loans];
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedLoans));
+  saveToStorage('LOANS', updatedLoans);
   return updatedLoans;
 }
 
@@ -88,58 +78,8 @@ export function cloneLoan(loans: SavedLoan[], loan: SavedLoan, newName: string):
  * Exporte tous les prêts en JSON
  */
 export function exportLoans(loans: SavedLoan[]): void {
-  const dataStr = JSON.stringify(loans, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `prets-opti-loan-${format(new Date(), 'yyyy-MM-dd')}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-/**
- * Ajoute une période de paiement variable
- */
-export function addPaymentPeriod(
-  periods: MonthlyPaymentPeriod[],
-  startMonth: number,
-  endMonth: number,
-  monthlyPayment: number
-): MonthlyPaymentPeriod[] {
-  const newPeriod: MonthlyPaymentPeriod = {
-    id: Date.now().toString(),
-    startMonth,
-    endMonth,
-    monthlyPayment
-  };
-
-  return [...periods, newPeriod].sort((a, b) => a.startMonth - b.startMonth);
-}
-
-/**
- * Supprime une période de paiement variable
- */
-export function deletePaymentPeriod(
-  periods: MonthlyPaymentPeriod[],
-  id: string
-): MonthlyPaymentPeriod[] {
-  return periods.filter((p) => p.id !== id);
-}
-
-/**
- * Obtient la mensualité pour un mois donné (gestion des mensualités variables)
- */
-export function getMonthlyPaymentForMonth(
-  month: number,
-  defaultPayment: number,
-  calculationMode: 'payment' | 'duration' | 'variable',
-  paymentPeriods: MonthlyPaymentPeriod[] = []
-): number {
-  if (calculationMode !== 'variable') return defaultPayment;
-
-  const period = paymentPeriods.find((p) => month >= p.startMonth && month <= p.endMonth);
-  return period ? period.monthlyPayment : defaultPayment;
+  const filename = `prets-opti-loan-${format(new Date(), 'yyyy-MM-dd')}.json`;
+  exportAsJSON(loans, filename);
 }
 
 /**
@@ -150,15 +90,12 @@ export function calculateMonthlyPayment(
   annualRate: number,
   durationYears: number
 ): number {
-  const monthlyRate = annualRate / 100 / 12;
-  const totalMonths = durationYears * 12;
-
-  if (monthlyRate === 0) {
-    return amount / totalMonths;
-  }
-
-  return (
-    (amount * monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) /
-    (Math.pow(1 + monthlyRate, totalMonths) - 1)
-  );
+  return calculateStandardMonthlyPayment(amount, annualRate, durationYears);
 }
+
+// Ré-exporter les fonctions de paymentService pour la compatibilité
+export {
+  getMonthlyPaymentForMonth,
+  addPaymentPeriod,
+  deletePaymentPeriod
+} from './paymentService';

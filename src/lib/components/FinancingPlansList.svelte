@@ -1,17 +1,26 @@
 <script lang="ts">
-	import type { FinancingPlan } from '$lib/services';
 	import FinancingPlanCard from './FinancingPlanCard.svelte';
+	import { createPlansListStore } from '$lib/composables';
+	import { onMount } from 'svelte';
 
-	export let financingPlans: FinancingPlan[];
-	export let onDelete: (index: number) => void;
-
+	const plansStore = createPlansListStore();
 	let showFinancingPlans = false;
+
+	onMount(() => {
+		plansStore.refresh();
+	});
+
+	function handleDelete(index: number) {
+		if (confirm('Voulez-vous vraiment supprimer ce plan ?')) {
+			plansStore.remove(index);
+		}
+	}
 </script>
 
-{#if financingPlans.length > 0}
+{#if $plansStore.length > 0}
 	<div class="plans-list">
 		<div class="plans-header">
-			<h3>Plans créés ({financingPlans.length})</h3>
+			<h3>Plans créés ({$plansStore.length})</h3>
 			<button on:click={() => (showFinancingPlans = !showFinancingPlans)} class="btn-secondary">
 				{showFinancingPlans ? '▼ Masquer' : '▶ Afficher'}
 			</button>
@@ -19,8 +28,8 @@
 
 		{#if showFinancingPlans}
 			<div class="plans-grid">
-				{#each financingPlans as plan, index}
-					<FinancingPlanCard {plan} {index} {onDelete} />
+				{#each $plansStore as plan, index}
+					<FinancingPlanCard {plan} {index} onDelete={handleDelete} />
 				{/each}
 			</div>
 		{/if}

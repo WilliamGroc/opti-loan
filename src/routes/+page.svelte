@@ -2,16 +2,9 @@
 	import { format } from 'date-fns';
 	import { fr } from 'date-fns/locale';
 	import { onMount } from 'svelte';
-	import type { SavedLoan, FinancingPlan, MonthlyPaymentPeriod } from '$lib/services';
-	import {
-		loadLoans,
-		saveLoan as saveLoanService,
-		deleteLoan as deleteLoanService,
-		cloneLoan as cloneLoanService,
-		loadFinancingPlans,
-		deleteFinancingPlan as deleteFinancingPlanService,
-		calculateLoan as calculateLoanService
-	} from '$lib/services';
+	import type { SavedLoan, MonthlyPaymentPeriod } from '$lib/services';
+	import { calculateLoan as calculateLoanService } from '$lib/services';
+	import { createLoansListStore } from '$lib/composables';
 	import {
 		LoanForm,
 		SavedLoansList,
@@ -69,10 +62,8 @@
 	let calculationMode: 'payment' | 'duration' | 'variable' = 'payment';
 	let paymentPeriods: MonthlyPaymentPeriod[] = [];
 
-	let savedLoans: SavedLoan[] = [];
+	const loansStore = createLoansListStore();
 	let loanName = '';
-
-	let financingPlans: FinancingPlan[] = [];
 
 	let hiddenAmortization = true;
 
@@ -82,7 +73,7 @@
 			return;
 		}
 
-		savedLoans = saveLoanService(savedLoans, {
+		loansStore.add({
 			name: loanName,
 			amount,
 			annualRate,
@@ -106,35 +97,8 @@
 		paymentPeriods = loan.paymentPeriods ? [...loan.paymentPeriods] : [];
 	}
 
-	function handleDeleteLoan(id: string) {
-		if (confirm('Voulez-vous vraiment supprimer ce prêt ?')) {
-			savedLoans = deleteLoanService(savedLoans, id);
-		}
-	}
-
-	function handleCloneLoan(loan: SavedLoan) {
-		const newName = prompt('Nom du nouveau prêt :', `${loan.name} (copie)`);
-		if (!newName || !newName.trim()) {
-			return;
-		}
-
-		savedLoans = cloneLoanService(savedLoans, loan, newName);
-		alert('Prêt cloné avec succès !');
-	}
-
-	function handleDeleteFinancingPlan(index: number) {
-		if (confirm('Voulez-vous vraiment supprimer ce plan ?')) {
-			financingPlans = deleteFinancingPlanService(financingPlans, index);
-		}
-	}
-
-	function handlePlanCreated(updatedPlans: FinancingPlan[]) {
-		financingPlans = updatedPlans;
-	}
-
 	onMount(() => {
-		savedLoans = loadLoans();
-		financingPlans = loadFinancingPlans();
+		loansStore.refresh();
 	});
 
 	function handleCalculateLoan() {
@@ -225,12 +189,7 @@
 		onSaveLoan={handleSaveLoan}
 	/>
 
-	<SavedLoansList
-		bind:savedLoans
-		onLoad={loadLoan}
-		onDelete={handleDeleteLoan}
-		onClone={handleCloneLoan}
-	/>
+	<SavedLoansList onLoad={loadLoan} />
 
 	<ResultsCards {monthlyPayment} {totalCost} {totalInterest} {durationYears} />
 
@@ -246,9 +205,9 @@
 	<div class="financing-plan">
 		<h2>Plan de Financement</h2>
 
-		<FinancingPlanForm {savedLoans} bind:financingPlans onPlanCreated={handlePlanCreated} />
+		<FinancingPlanForm />
 
-		<FinancingPlansList bind:financingPlans onDelete={handleDeleteFinancingPlan} />
+		<FinancingPlansList />
 	</div>
 
 	<div class="amortization">

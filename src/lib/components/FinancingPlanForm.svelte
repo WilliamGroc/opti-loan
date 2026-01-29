@@ -1,13 +1,17 @@
 <script lang="ts">
-	import type { SavedLoan } from '$lib/services';
-	import { createFinancingPlan } from '$lib/services';
+	import { createLoansListStore, createPlansListStore } from '$lib/composables';
+	import { onMount } from 'svelte';
 
-	export let savedLoans: SavedLoan[];
-	export let financingPlans: any[] = [];
-	export let onPlanCreated: (plans: any[]) => void;
+	const loansStore = createLoansListStore();
+	const plansStore = createPlansListStore();
 
 	let financingPlanName = '';
 	let selectedLoansForPlan: Set<string> = new Set();
+
+	onMount(() => {
+		loansStore.refresh();
+		plansStore.refresh();
+	});
 
 	function handleCreateFinancingPlan() {
 		if (!financingPlanName.trim()) {
@@ -20,17 +24,16 @@
 			return;
 		}
 
-		const selectedLoans = savedLoans.filter((loan) => selectedLoansForPlan.has(loan.id));
-		const updatedPlans = createFinancingPlan(financingPlans, financingPlanName, selectedLoans);
+		const selectedLoans = $loansStore.filter((loan) => selectedLoansForPlan.has(loan.id));
+		plansStore.create(financingPlanName, selectedLoans);
 
-		onPlanCreated(updatedPlans);
 		financingPlanName = '';
 		selectedLoansForPlan = new Set();
 		alert('Plan de financement créé avec succès !');
 	}
 </script>
 
-{#if savedLoans.length > 0}
+{#if $loansStore.length > 0}
 	<div class="plan-creation">
 		<h3>Créer un nouveau plan</h3>
 		<div class="plan-input">
@@ -45,7 +48,7 @@
 		<div class="loans-selection">
 			<h4>Sélectionner les prêts à inclure :</h4>
 			<div class="selection-list">
-				{#each savedLoans as loan}
+				{#each $loansStore as loan}
 					<label class="loan-checkbox">
 						<input
 							type="checkbox"

@@ -5,6 +5,7 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { FinancingPlan, AmortizationRow } from './types';
+import { exportAsCSV, exportAsJSON } from './storageService';
 
 /**
  * Exporte un plan de financement en format CSV
@@ -24,13 +25,8 @@ export function exportPlanAsCSV(plan: FinancingPlan, amortizationData: Amortizat
     csv += `${row.month},${format(row.date, 'MMM yyyy', { locale: fr })},${row.totalMonthlyPayment.toFixed(2)},${row.totalPrincipal.toFixed(2)},${row.totalInterest.toFixed(2)},${row.totalRemaining.toFixed(2)}\n`;
   });
 
-  const dataBlob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `plan-${plan.name.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  const filename = `plan-${plan.name.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  exportAsCSV(csv, filename);
 }
 
 /**
@@ -43,13 +39,8 @@ export function exportPlanAsJSON(plan: FinancingPlan, amortizationData: Amortiza
     exportDate: new Date().toISOString()
   };
 
-  const dataBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(dataBlob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `plan-${plan.name.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
+  const filename = `plan-${plan.name.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.json`;
+  exportAsJSON(exportData, filename);
 }
 
 /**

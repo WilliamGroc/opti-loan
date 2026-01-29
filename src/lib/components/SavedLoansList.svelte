@@ -1,24 +1,40 @@
 <script lang="ts">
 	import type { SavedLoan } from '$lib/services';
 	import LoanCard from './LoanCard.svelte';
-	import { exportLoans } from '$lib/services';
+	import { createLoansListStore } from '$lib/composables';
+	import { onMount } from 'svelte';
 
-	export let savedLoans: SavedLoan[];
 	export let onLoad: (loan: SavedLoan) => void;
-	export let onDelete: (id: string) => void;
-	export let onClone: (loan: SavedLoan) => void;
 
+	const loansStore = createLoansListStore();
 	let showSavedLoans = false;
 
+	onMount(() => {
+		loansStore.refresh();
+	});
+
+	function handleDelete(id: string) {
+		if (confirm('Voulez-vous vraiment supprimer ce prêt ?')) {
+			loansStore.remove(id);
+		}
+	}
+
+	function handleClone(loan: SavedLoan) {
+		const newName = prompt('Nom du nouveau prêt :', `${loan.name} (copie)`);
+		if (newName && newName.trim()) {
+			loansStore.clone(loan, newName);
+		}
+	}
+
 	function handleExportLoans() {
-		exportLoans(savedLoans);
+		loansStore.export();
 	}
 </script>
 
-{#if savedLoans.length > 0}
+{#if $loansStore.length > 0}
 	<div class="saved-loans">
 		<div class="saved-loans-header">
-			<h2>Prêts sauvegardés ({savedLoans.length})</h2>
+			<h2>Prêts sauvegardés ({$loansStore.length})</h2>
 			<div class="header-actions">
 				<button on:click={() => (showSavedLoans = !showSavedLoans)} class="btn-secondary">
 					{showSavedLoans ? '▼ Masquer' : '▶ Afficher'}
@@ -29,8 +45,8 @@
 
 		{#if showSavedLoans}
 			<div class="loans-grid">
-				{#each savedLoans as loan}
-					<LoanCard {loan} {onLoad} {onDelete} {onClone} />
+				{#each $loansStore as loan}
+					<LoanCard {loan} {onLoad} onDelete={handleDelete} onClone={handleClone} />
 				{/each}
 			</div>
 		{/if}

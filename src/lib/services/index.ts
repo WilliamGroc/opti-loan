@@ -1,4 +1,7 @@
 export * from './types';
+export * from './utils';
+export * from './storageService';
+export * from './paymentService';
 export * from './planService';
 export * from './amortizationService';
 export * from './exportService';
