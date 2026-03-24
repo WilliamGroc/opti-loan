@@ -1,13 +1,27 @@
 <script lang="ts">
-	export let variant: 'primary' | 'secondary' | 'danger' | 'success' | 'info' | 'default' =
-		'primary';
-	export let size: 'sm' | 'md' | 'lg' = 'md';
-	export let fullWidth = false;
-	export let disabled = false;
+	import type { Snippet } from 'svelte';
+
+	type Props = {
+		variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'info' | 'default';
+		size?: 'sm' | 'md' | 'lg';
+		fullWidth?: boolean;
+		disabled?: boolean;
+		onclick?: () => void;
+		children?: Snippet;
+	};
+
+	let {
+		variant = 'primary',
+		size = 'md',
+		fullWidth = false,
+		disabled = false,
+		onclick,
+		children
+	}: Props = $props();
 </script>
 
-<button class="btn btn-{variant} btn-{size}" class:full-width={fullWidth} {disabled} on:click>
-	<slot />
+<button class="btn btn-{variant} btn-{size}" class:full-width={fullWidth} {disabled} {onclick}>
+	{@render children?.()}
 </button>
 
 <style>

@@ -2,13 +2,21 @@
 	import type { MonthlyPaymentPeriod } from '$lib/services';
 	import { addPaymentPeriod, deletePaymentPeriod } from '$lib/services';
 
-	export let monthlyPayment = 0;
-	export let paymentPeriods: MonthlyPaymentPeriod[] = [];
-	export let durationYears = 20;
+	type Props = {
+		monthlyPayment?: number;
+		paymentPeriods?: MonthlyPaymentPeriod[];
+		durationYears?: number;
+	};
 
-	let newPeriodStartMonth = 1;
-	let newPeriodEndMonth = 12;
-	let newPeriodMonthlyPayment = 1000;
+	let {
+		monthlyPayment = $bindable(0),
+		paymentPeriods = $bindable([]),
+		durationYears = 20
+	}: Props = $props();
+
+	let newPeriodStartMonth = $state(1);
+	let newPeriodEndMonth = $state(12);
+	let newPeriodMonthlyPayment = $state(1000);
 
 	function handleAddPeriod() {
 		if (newPeriodStartMonth < 1 || newPeriodEndMonth > durationYears * 12) {
@@ -85,20 +93,20 @@
 					/>
 				</label>
 			</div>
-			<button on:click={handleAddPeriod} class="btn-add">➕ Ajouter</button>
+			<button onclick={handleAddPeriod} class="btn-add">➕ Ajouter</button>
 		</div>
 	</div>
 
 	{#if paymentPeriods.length > 0}
 		<div class="periodes-list">
 			<h4>Périodes définies :</h4>
-			{#each paymentPeriods as period}
+			{#each paymentPeriods as period (period.id)}
 				<div class="periode-item">
 					<span class="periode-info">
 						Mois {period.startMonth} à {period.endMonth} :
 						<strong>{period.monthlyPayment.toFixed(2)} €</strong>
 					</span>
-					<button on:click={() => handleDeletePeriod(period.id)} class="btn-delete-small">
+					<button onclick={() => handleDeletePeriod(period.id)} class="btn-delete-small">
 						❌
 					</button>
 				</div>

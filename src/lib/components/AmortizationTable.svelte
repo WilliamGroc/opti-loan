@@ -20,15 +20,19 @@
 		totalRemaining: number;
 	}
 
-	export let data: AmortizationRow[];
-	export let showFull = false;
-	export let variant: 'default' | 'optimized' = 'default';
-	export let onToggleFull: (() => void) | undefined = undefined;
+	type Props = {
+		data: AmortizationRow[];
+		showFull?: boolean;
+		variant?: 'default' | 'optimized';
+		onToggleFull?: () => void;
+	};
+
+	let { data, showFull = false, variant = 'default', onToggleFull = undefined }: Props = $props();
 </script>
 
 {#if onToggleFull}
 	<div class="button-container">
-		<button on:click={onToggleFull} class="btn-toggle">
+		<button onclick={onToggleFull} class="btn-toggle">
 			{showFull ? '📊 Affichage condensé' : '📊 Afficher toutes les mensualités'}
 		</button>
 	</div>
@@ -50,9 +54,9 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each data as row, i}
+			{#each data as row, i (row.date.getTime())}
 				{#if showFull || i < 12 || i >= data.length - 12 || i % 12 === 0}
-					{#each row.loansData as loanData, loanIndex}
+					{#each row.loansData as loanData, loanIndex (loanData.name)}
 						<tr class="loan-row" class:optimized={variant === 'optimized'}>
 							{#if loanIndex === 0}
 								<td rowspan={row.loansData.length + 1} class="month-cell">{row.month}</td>

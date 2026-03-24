@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let deferredPrompt = $state<any>(null);
 	let showInstallPrompt = $state(false);
 	let isIOS = $state(false);
 
-	onMount(() => {
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+
 		// Vérifier si c'est iOS
 		isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -16,7 +17,7 @@
 		}
 
 		// Écouter l'événement beforeinstallprompt (Android/Chrome)
-		window.addEventListener('beforeinstallprompt', (e) => {
+		const handleBeforeInstall = (e: Event) => {
 			e.preventDefault();
 			deferredPrompt = e;
 
@@ -25,7 +26,9 @@
 			if (!dismissed) {
 				showInstallPrompt = true;
 			}
-		});
+		};
+
+		window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
 		// Pour iOS, afficher le prompt si pas déjà installé
 		if (isIOS) {
@@ -34,6 +37,10 @@
 				showInstallPrompt = true;
 			}
 		}
+
+		return () => {
+			window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+		};
 	});
 
 	async function handleInstall() {

@@ -1,10 +1,22 @@
 <script lang="ts">
-	export let label: string;
-	export let value: string;
-	export let variant: 'default' | 'optimized' | 'savings' = 'default';
+type Props = {
+		label: string;
+		value: string;
+		variant?: 'default' | 'optimized' | 'savings';
+	};
+  
+	let {
+		label,
+		value,
+		variant = 'default'
+	}: Props = $props();
 </script>
 
-<div class="summary-card" class:optimized={variant === 'optimized'} class:savings={variant === 'savings'}>
+<div
+	class="summary-card"
+	class:optimized={variant === 'optimized'}
+	class:savings={variant === 'savings'}
+>
 	<span class="label">{label}</span>
 	<span class="value" class:highlight={variant !== 'default'}>{value}</span>
 </div>

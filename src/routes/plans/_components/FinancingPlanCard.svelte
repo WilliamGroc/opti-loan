@@ -4,20 +4,31 @@
 	import type { FinancingPlan } from '$lib/services';
 	import { calculatePlanAmortization } from '$lib/services';
 
-	export let plan: FinancingPlan;
-	export let index: number;
-	export let onDelete: (index: number) => void;
+	type Props = {
+		plan: FinancingPlan;
+		index: number;
+		onDelete: (index: number) => void;
+	};
 
-	let selectedPlanIndex = -1;
-	let planAmortizationTable: Array<{
-		month: number;
-		date: Date;
-		loansData: Array<{ name: string; monthlyPayment: number; principal: number; interest: number }>;
-		totalMonthlyPayment: number;
-		totalPrincipal: number;
-		totalInterest: number;
-		totalRemaining: number;
-	}> = [];
+	let { plan, index, onDelete }: Props = $props();
+
+	let selectedPlanIndex = $state(-1);
+	let planAmortizationTable = $state<
+		Array<{
+			month: number;
+			date: Date;
+			loansData: Array<{
+				name: string;
+				monthlyPayment: number;
+				principal: number;
+				interest: number;
+			}>;
+			totalMonthlyPayment: number;
+			totalPrincipal: number;
+			totalInterest: number;
+			totalRemaining: number;
+		}>
+	>([]);
 
 	function handleViewDetails() {
 		selectedPlanIndex = selectedPlanIndex === index ? -1 : index;
@@ -30,7 +41,7 @@
 <div class="plan-card">
 	<div class="plan-card-header">
 		<h4>{plan.name}</h4>
-		<button on:click={() => onDelete(index)} class="btn-delete" title="Supprimer"> 🗑️ </button>
+		<button onclick={() => onDelete(index)} class="btn-delete" title="Supprimer"> 🗑️ </button>
 	</div>
 
 	<div class="plan-details">
@@ -57,7 +68,7 @@
 	<div class="plan-loans-list">
 		<h5>Prêts inclus:</h5>
 		<ul>
-			{#each plan.selectedLoans as loan}
+			{#each plan.selectedLoans as loan (loan.id)}
 				<li>
 					{loan.name} - {loan.amount.toLocaleString('fr-FR')} € ({loan.durationYears} ans)
 				</li>
@@ -65,7 +76,7 @@
 		</ul>
 	</div>
 
-	<button on:click={handleViewDetails} class="btn-view-details">
+	<button onclick={handleViewDetails} class="btn-view-details">
 		{selectedPlanIndex === index ? '▼ Masquer détails' : '▶ Voir détails'}
 	</button>
 
@@ -109,7 +120,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each planAmortizationTable as row, i}
+						{#each planAmortizationTable as row, i (row.date.getTime())}
 							{#if i < 12 || i >= planAmortizationTable.length - 12 || i % 12 === 0}
 								<tr>
 									<td>{row.month}</td>

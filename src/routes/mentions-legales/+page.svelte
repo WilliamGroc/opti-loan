@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	const siteName = 'Calcul Prêt';
 	const siteUrl = 'https://www.calcul-pret.com';
 	const pageTitle = 'Mentions Légales | Calcul-pret.com';
@@ -21,7 +23,7 @@
 
 <div class="page-wrapper">
 	<nav class="nav-bar">
-		<a href="/" class="nav-link">← Retour à l'accueil</a>
+		<a href={resolve('/')} class="nav-link">← Retour à l'accueil</a>
 	</nav>
 
 	<div class="legal-container">

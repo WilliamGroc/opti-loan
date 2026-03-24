@@ -3,15 +3,29 @@
 	import VariablePaymentPeriods from './VariablePaymentPeriods.svelte';
 
 	// Props
-	export let amount = 200000;
-	export let annualRate = 1.5;
-	export let durationYears = 20;
-	export let monthlyPayment = 0;
-	export let startDate: string;
-	export let calculationMode: 'payment' | 'duration' | 'variable' = 'payment';
-	export let paymentPeriods: MonthlyPaymentPeriod[] = [];
-	export let loanName = '';
-	export let onSaveLoan: () => void;
+	type Props = {
+		amount?: number;
+		annualRate?: number;
+		durationYears?: number;
+		monthlyPayment?: number;
+		startDate: string;
+		calculationMode?: 'payment' | 'duration' | 'variable';
+		paymentPeriods?: MonthlyPaymentPeriod[];
+		loanName?: string;
+		onSaveLoan: () => void;
+	};
+
+	let {
+		amount = $bindable(200000),
+		annualRate = $bindable(1.5),
+		durationYears = $bindable(20),
+		monthlyPayment = $bindable(0),
+		startDate = $bindable(),
+		calculationMode = $bindable('payment' as 'payment' | 'duration' | 'variable'),
+		paymentPeriods = $bindable([] as MonthlyPaymentPeriod[]),
+		loanName = $bindable(''),
+		onSaveLoan
+	}: Props = $props();
 </script>
 
 <div class="calculator">
@@ -80,7 +94,7 @@
 				bind:value={loanName}
 				class="save-input"
 			/>
-			<button on:click={onSaveLoan} class="btn-primary"> 💾 Sauvegarder </button>
+			<button onclick={onSaveLoan} class="btn-primary"> 💾 Sauvegarder </button>
 		</div>
 	</div>
 </div>

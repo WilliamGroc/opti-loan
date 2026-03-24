@@ -3,16 +3,20 @@
 	import { fr } from 'date-fns/locale';
 	import type { SavedLoan } from '$lib/services';
 
-	export let loan: SavedLoan;
-	export let onLoad: (loan: SavedLoan) => void;
-	export let onDelete: (id: string) => void;
-	export let onClone: (loan: SavedLoan) => void;
+	type Props = {
+		loan: SavedLoan;
+		onLoad: (loan: SavedLoan) => void;
+		onDelete: (id: string) => void;
+		onClone: (loan: SavedLoan) => void;
+	};
+
+	let { loan, onLoad, onDelete, onClone }: Props = $props();
 </script>
 
 <div class="loan-card">
 	<div class="loan-card-header">
 		<h3>{loan.name}</h3>
-		<button on:click={() => onDelete(loan.id)} class="btn-delete" title="Supprimer"> 🗑️ </button>
+		<button onclick={() => onDelete(loan.id)} class="btn-delete" title="Supprimer"> 🗑️ </button>
 	</div>
 	<div class="loan-details">
 		<div class="loan-detail">
@@ -39,8 +43,8 @@
 		</div>
 	</div>
 	<div class="loan-actions">
-		<button on:click={() => onLoad(loan)} class="btn-load"> 📂 Charger </button>
-		<button on:click={() => onClone(loan)} class="btn-clone"> 📋 Cloner </button>
+		<button onclick={() => onLoad(loan)} class="btn-load"> 📂 Charger </button>
+		<button onclick={() => onClone(loan)} class="btn-clone"> 📋 Cloner </button>
 	</div>
 </div>
 

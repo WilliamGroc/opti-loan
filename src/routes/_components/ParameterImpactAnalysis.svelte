@@ -2,41 +2,51 @@
 	import { calculateLoan } from '$lib/services';
 	import type { MonthlyPaymentPeriod } from '$lib/services';
 
-	export let baseAmount: number;
-	export let baseAnnualRate: number;
-	export let baseDurationYears: number;
-	export let startDate: string;
-	export let calculationMode: 'payment' | 'duration' | 'variable' = 'payment';
-	export let paymentPeriods: MonthlyPaymentPeriod[] = [];
+	type Props = {
+		baseAmount: number;
+		baseAnnualRate: number;
+		baseDurationYears: number;
+		startDate: string;
+		calculationMode?: 'payment' | 'duration' | 'variable';
+		paymentPeriods?: MonthlyPaymentPeriod[];
+	};
+
+	let {
+		baseAmount,
+		baseAnnualRate,
+		baseDurationYears,
+		startDate,
+		calculationMode = 'payment',
+		paymentPeriods = []
+	}: Props = $props();
 
 	// Valeurs modifiables avec les sliders
-	let currentAmount = baseAmount;
-	let currentRate = baseAnnualRate;
-	let currentDuration = baseDurationYears;
+	let currentAmount = $state(baseAmount);
+	let currentRate = $state(baseAnnualRate);
+	let currentDuration = $state(baseDurationYears);
+	let hidden = $state(true);
 
 	// Calcul de base (référence)
-	let baseResult = {
+	let baseResult = $state({
 		monthlyPayment: 0,
 		totalCost: 0,
 		totalInterest: 0
-	};
+	});
 
 	// Résultat avec les valeurs actuelles des sliders
-	let currentResult = {
+	let currentResult = $state({
 		monthlyPayment: 0,
 		totalCost: 0,
 		totalInterest: 0
-	};
+	});
 
-	let hidden = true;
-
-	// Plages min/max pour les sliders
-	$: minAmount = Math.round(baseAmount * 0.5);
-	$: maxAmount = Math.round(baseAmount * 1.5);
-	$: minRate = Math.max(0.1, baseAnnualRate * 0.5);
-	$: maxRate = baseAnnualRate * 1.5;
-	$: minDuration = Math.max(1, Math.round(baseDurationYears * 0.5));
-	$: maxDuration = Math.round(baseDurationYears * 1.5);
+	// Plages min/max pour les sliders (valeurs dérivées)
+	let minAmount = $derived(Math.round(baseAmount * 0.5));
+	let maxAmount = $derived(Math.round(baseAmount * 1.5));
+	let minRate = $derived(Math.max(0.1, baseAnnualRate * 0.5));
+	let maxRate = $derived(baseAnnualRate * 1.5);
+	let minDuration = $derived(Math.max(1, Math.round(baseDurationYears * 0.5)));
+	let maxDuration = $derived(Math.round(baseDurationYears * 1.5));
 
 	function calculateResults() {
 		// Calcul de base
@@ -100,31 +110,23 @@
 		return `${sign}${diff.toFixed(1)} %`;
 	}
 
-	// Recalculer quand les paramètres de base ou les sliders changent
-	$: {
-		(baseAmount,
-			baseAnnualRate,
-			baseDurationYears,
-			currentAmount,
-			currentRate,
-			currentDuration,
-			startDate);
+	// Recalculer quand les paramètres changent
+	$effect(() => {
 		calculateResults();
-	}
+	});
 
 	// Réinitialiser les sliders quand les paramètres de base changent
-	$: {
-		(baseAmount, baseAnnualRate, baseDurationYears);
+	$effect(() => {
 		currentAmount = baseAmount;
 		currentRate = baseAnnualRate;
 		currentDuration = baseDurationYears;
-	}
+	});
 </script>
 
 <div class="impact-analysis">
 	<div class="header">
 		<h2>🎛️ Simulateur Interactif</h2>
-		<button on:click={() => (hidden = !hidden)}>
+		<button onclick={() => (hidden = !hidden)}>
 			{#if hidden}👁️ Montrer{:else}🙈 Cacher{/if}
 		</button>
 	</div>
@@ -134,7 +136,7 @@
 			affectent votre prêt.
 		</p>
 	{:else}
-		<button class="reset-btn" on:click={resetToBase}> 🔄 Réinitialiser </button>
+		<button class="reset-btn" onclick={resetToBase}> 🔄 Réinitialiser </button>
 		<p class="description">
 			Utilisez les curseurs pour faire varier les paramètres de votre prêt et visualisez
 			instantanément l'impact sur la mensualité, le coût total et les intérêts.

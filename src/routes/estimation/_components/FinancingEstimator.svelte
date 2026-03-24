@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	type PropertyType = 'new' | 'old';
 
 	interface SavedProject {
@@ -22,35 +20,35 @@
 		saveDate: string;
 	}
 
-	let propertyValue = 300000;
-	let downPayment = 60000;
-	let propertyType: PropertyType = 'old';
+	let propertyValue = $state(300000);
+	let downPayment = $state(60000);
+	let propertyType = $state<PropertyType>('old');
 
 	// Frais de notaire
-	let notaryFeesPercentNew = 2.5;
-	let notaryFeesPercentOld = 7.5;
+	let notaryFeesPercentNew = $state(2.5);
+	let notaryFeesPercentOld = $state(7.5);
 
 	// Frais de dossier
-	let fileFeePercent = 1.0;
+	let fileFeePercent = $state(1.0);
 
 	// Assurance emprunteur (annuel)
-	let insurancePercent = 0.35;
+	let insurancePercent = $state(0.35);
 
 	// Garantie
-	let guaranteePercent = 1.5;
+	let guaranteePercent = $state(1.5);
 
 	// Taux d'emprunt et durée
-	let loanRate = 1.5;
-	let loanDuration = 20;
+	let loanRate = $state(1.5);
+	let loanDuration = $state(20);
 
 	// Revenus de l'emprunteur
-	let monthlySalary = 3000;
-	let otherIncome = 0;
-	let otherLoans = 0;
+	let monthlySalary = $state(3000);
+	let otherIncome = $state(0);
+	let otherLoans = $state(0);
 
 	// Sauvegarde des projets
-	let projectName = '';
-	let savedProjects: SavedProject[] = [];
+	let projectName = $state('');
+	let savedProjects = $state<SavedProject[]>([]);
 
 	interface EstimationResult {
 		propertyValue: number;
@@ -73,8 +71,6 @@
 		maxLoanCapacity: number;
 		maxPropertyValue: number;
 	}
-
-	let result: EstimationResult;
 
 	function calculateEstimation(): EstimationResult {
 		// Montant à emprunter (avant frais)
@@ -151,14 +147,9 @@
 			}
 
 			// Calcul du prix maximum du bien en tenant compte de tous les frais
-			// Formule: maxLoanCapacity = Prix + Frais - Apport
-			// Où Frais = Notaire(Prix) + Dossier(Emprunt) + Garantie(Emprunt)
-			// Et Emprunt = Prix + Frais - Apport
-			// Résolution itérative pour trouver le prix maximum
-
 			const notaryPercent = propertyType === 'new' ? notaryFeesPercentNew : notaryFeesPercentOld;
 
-			// Approximation par itération (converge rapidement)
+			// Approximation par itération
 			let estimatedPrice = maxLoanCapacity + downPayment;
 			for (let i = 0; i < 10; i++) {
 				const estimatedNotaryFees = (estimatedPrice * notaryPercent) / 100;
@@ -168,7 +159,6 @@
 				const estimatedTotalFees = estimatedNotaryFees + estimatedFileFees + estimatedGuarantee;
 				const estimatedTotalToFinance = estimatedPrice + estimatedTotalFees - downPayment;
 
-				// Ajuster le prix en fonction de l'écart
 				if (estimatedTotalToFinance > maxLoanCapacity) {
 					estimatedPrice = estimatedPrice * (maxLoanCapacity / estimatedTotalToFinance);
 				} else {
@@ -201,23 +191,8 @@
 		};
 	}
 
-	$: {
-		// Force la recalculation quand une de ces variables change
-		propertyValue;
-		downPayment;
-		propertyType;
-		notaryFeesPercentNew;
-		notaryFeesPercentOld;
-		fileFeePercent;
-		insurancePercent;
-		guaranteePercent;
-		loanRate;
-		loanDuration;
-		monthlySalary;
-		otherIncome;
-		otherLoans;
-		result = calculateEstimation();
-	}
+	// Calcul automatique dès qu'un paramètre change
+	let result = $derived(calculateEstimation());
 
 	function loadProjects() {
 		const stored = localStorage.getItem('financingProjects');
@@ -226,6 +201,7 @@
 				savedProjects = JSON.parse(stored);
 			} catch (e) {
 				savedProjects = [];
+				console.error(e);
 			}
 		}
 	}
@@ -302,8 +278,10 @@
 		alert('Projet cloné avec succès !');
 	}
 
-	onMount(() => {
-		loadProjects();
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			loadProjects();
+		}
 	});
 </script>
 
@@ -316,7 +294,7 @@
 	</div>
 
 	<div class="form-section">
-		<h2>� Sauvegarder le projet</h2>
+		<h2>Sauvegarder le projet</h2>
 		<div class="save-section">
 			<input
 				type="text"
@@ -324,7 +302,7 @@
 				placeholder="Nom du projet (ex: Appartement Paris 15e)"
 				class="input-field project-name-input"
 			/>
-			<button on:click={saveProject} class="save-btn">💾 Enregistrer</button>
+			<button onclick={saveProject} class="save-btn">💾 Enregistrer</button>
 		</div>
 	</div>
 
@@ -332,7 +310,7 @@
 		<div class="form-section">
 			<h2>📂 Projets sauvegardés</h2>
 			<div class="projects-list">
-				{#each savedProjects as project}
+				{#each savedProjects as project (project.id)}
 					<div class="project-card">
 						<div class="project-info">
 							<div class="project-name">{project.name}</div>
@@ -346,13 +324,13 @@
 							</div>
 						</div>
 						<div class="project-actions">
-							<button on:click={() => loadProject(project)} class="action-btn load-btn"
+							<button onclick={() => loadProject(project)} class="action-btn load-btn"
 								>📂 Charger</button
 							>
-							<button on:click={() => cloneProject(project)} class="action-btn clone-btn"
+							<button onclick={() => cloneProject(project)} class="action-btn clone-btn"
 								>📋 Dupliquer</button
 							>
-							<button on:click={() => deleteProject(project.id)} class="action-btn delete-btn"
+							<button onclick={() => deleteProject(project.id)} class="action-btn delete-btn"
 								>🗑️ Supprimer</button
 							>
 						</div>

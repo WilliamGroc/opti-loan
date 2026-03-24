@@ -1,8 +1,17 @@
 <script lang="ts">
-	export let monthlyPayment = 0;
-	export let totalCost = 0;
-	export let totalInterest = 0;
-	export let durationYears = 20;
+	type Props = {
+		monthlyPayment?: number;
+		totalCost?: number;
+		totalInterest?: number;
+		durationYears?: number;
+	};
+
+	let {
+		monthlyPayment = 0,
+		totalCost = 0,
+		totalInterest = 0,
+		durationYears = 20
+	}: Props = $props();
 </script>
 
 <div class="results">

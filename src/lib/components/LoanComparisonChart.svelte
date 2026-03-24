@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
 	import type { AmortizationRow } from '$lib/services/types';
 
 	Chart.register(...registerables);
 
-	interface Props {
+	type Props = {
 		data: AmortizationRow[];
-	}
+	};
 
 	let { data }: Props = $props();
 
@@ -205,20 +204,15 @@
 		});
 	}
 
-	onMount(() => {
-		createChart();
-	});
-
-	onDestroy(() => {
-		if (chart) {
-			chart.destroy();
-		}
-	});
-
 	$effect(() => {
 		if (data) {
 			createChart();
 		}
+		return () => {
+			if (chart) {
+				chart.destroy();
+			}
+		};
 	});
 </script>
 

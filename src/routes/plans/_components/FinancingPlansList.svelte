@@ -1,12 +1,11 @@
 <script lang="ts">
 	import FinancingPlanCard from './FinancingPlanCard.svelte';
 	import { createPlansListStore } from '$lib/composables';
-	import { onMount } from 'svelte';
 
 	const plansStore = createPlansListStore();
-	let showFinancingPlans = false;
+	let showFinancingPlans = $state(false);
 
-	onMount(() => {
+	$effect(() => {
 		plansStore.refresh();
 	});
 
@@ -21,14 +20,14 @@
 	<div class="plans-list">
 		<div class="plans-header">
 			<h3>Plans créés ({$plansStore.length})</h3>
-			<button on:click={() => (showFinancingPlans = !showFinancingPlans)} class="btn-secondary">
+			<button onclick={() => (showFinancingPlans = !showFinancingPlans)} class="btn-secondary">
 				{showFinancingPlans ? '▼ Masquer' : '▶ Afficher'}
 			</button>
 		</div>
 
 		{#if showFinancingPlans}
 			<div class="plans-grid">
-				{#each $plansStore as plan, index}
+				{#each $plansStore as plan, index (plan.name)}
 					<FinancingPlanCard {plan} {index} onDelete={handleDelete} />
 				{/each}
 			</div>

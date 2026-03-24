@@ -1,5 +1,6 @@
 <script lang="ts">
-	export let savings: number;
+	type Props = { savings: number };
+	let { savings }: Props = $props();
 </script>
 
 <div class="optimization-alert">

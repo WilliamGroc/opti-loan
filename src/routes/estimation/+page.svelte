@@ -1,5 +1,6 @@
 <script lang="ts">
-	import FinancingEstimator from '$lib/components/FinancingEstimator.svelte';
+	import { Navigation } from '$lib/components';
+	import FinancingEstimator from './_components/FinancingEstimator.svelte';
 
 	const siteName = 'Calcul Prêt';
 	const siteUrl = 'https://www.calcul-pret.com';
@@ -7,6 +8,7 @@
 	const pageDescription =
 		"Calculez votre capacité d'emprunt maximale et le prix maximum du bien que vous pouvez acheter. Estimation complète incluant frais de notaire, dossier, garantie, assurance et taux d'endettement. Outil gratuit et précis.";
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const structuredData = {
 		'@context': 'https://schema.org',
 		'@type': 'WebPage',
@@ -75,15 +77,17 @@
 	</script>
 </svelte:head>
 
-<div class="page-wrapper">
-	<nav class="nav-bar">
-		<a href="/" class="nav-link">← Retour au calculateur</a>
-		<div class="nav-links">
-			<a href="/plans" class="btn-nav" title="Voir les plans de financement">📋 Mes Plans</a>
-		</div>
-	</nav>
+<div class="app-wrapper">
+	<Navigation currentPage="estimation" />
 
-	<FinancingEstimator />
+	<div class="container">
+		<div class="page-hero">
+			<h1>💰 Estimation de Capacité</h1>
+			<p class="hero-subtitle">Calculez votre capacité d'emprunt et le prix maximum du bien</p>
+		</div>
+
+		<FinancingEstimator />
+	</div>
 </div>
 
 <style>
@@ -96,67 +100,52 @@
 		min-height: 100vh;
 	}
 
-	.page-wrapper {
+	.app-wrapper {
 		min-height: 100vh;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 	}
 
-	.nav-bar {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 1.5rem 2rem;
-		flex-wrap: wrap;
-		gap: 1rem;
+	.container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 0 2rem 3rem 2rem;
 	}
 
-	.nav-link {
-		background: white;
-		color: #667eea;
-		padding: 0.75rem 1.5rem;
-		border-radius: 8px;
-		text-decoration: none;
-		font-weight: 600;
-		transition: all 0.2s;
-		display: inline-block;
+	.page-hero {
+		text-align: center;
+		padding: 3rem 0;
+		color: white;
 	}
 
-	.nav-link:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	.page-hero h1 {
+		font-size: 2.75rem;
+		margin: 0 0 1rem 0;
+		text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+		font-weight: 700;
 	}
 
-	.nav-links {
-		display: flex;
-		gap: 1rem;
-	}
-
-	.btn-nav {
-		background: white;
-		color: #667eea;
-		padding: 0.75rem 1.5rem;
-		border-radius: 8px;
-		text-decoration: none;
-		font-weight: 600;
-		transition: all 0.2s;
-		display: inline-block;
-	}
-
-	.btn-nav:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	.hero-subtitle {
+		font-size: 1.125rem;
+		margin: 0;
+		opacity: 0.95;
+		font-weight: 400;
 	}
 
 	@media (max-width: 768px) {
-		.nav-bar {
-			flex-direction: column;
-			align-items: stretch;
-			padding: 1rem;
+		.container {
+			padding: 0 1rem 2rem 1rem;
 		}
 
-		.nav-link,
-		.btn-nav {
-			width: 100%;
-			text-align: center;
+		.page-hero {
+			padding: 2rem 0;
+		}
+
+		.page-hero h1 {
+			font-size: 2rem;
+		}
+
+		.hero-subtitle {
+			font-size: 1rem;
 		}
 	}
 </style>

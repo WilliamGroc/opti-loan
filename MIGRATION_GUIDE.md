@@ -75,7 +75,7 @@ Migrer progressivement les composants Svelte existants pour utiliser les nouveau
 	$: loans = $loansStore;
 </script>
 
-<button on:click={() => loansStore.remove(loan.id)}> Supprimer </button>
+<button onclick={() => loansStore.remove(loan.id)}> Supprimer </button>
 ```
 
 **Avantages:**
@@ -144,7 +144,7 @@ Migrer progressivement les composants Svelte existants pour utiliser les nouveau
 	$: summary = $amortization.summary;
 </script>
 
-<button on:click={amortization.toggleMode}> Basculer Mode </button>
+<button onclick={amortization.toggleMode}> Basculer Mode </button>
 ```
 
 **Avantages:**
@@ -317,8 +317,8 @@ Migrer progressivement les composants Svelte existants pour utiliser les nouveau
 {#each loans as loan}
 	<div>
 		{loan.name}
-		<button on:click={() => handleDelete(loan.id)}>Delete</button>
-		<button on:click={() => handleClone(loan)}>Clone</button>
+		<button onclick={() => handleDelete(loan.id)}>Delete</button>
+		<button onclick={() => handleClone(loan)}>Clone</button>
 	</div>
 {/each}
 ```
@@ -344,8 +344,8 @@ Migrer progressivement les composants Svelte existants pour utiliser les nouveau
 {#each loans as loan}
 	<div>
 		{loan.name}
-		<button on:click={() => loansStore.remove(loan.id)}>Delete</button>
-		<button on:click={() => handleClone(loan)}>Clone</button>
+		<button onclick={() => loansStore.remove(loan.id)}>Delete</button>
+		<button onclick={() => handleClone(loan)}>Clone</button>
 	</div>
 {/each}
 ```

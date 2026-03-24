@@ -2,14 +2,16 @@
 	import type { SavedLoan } from '$lib/services';
 	import LoanCard from './LoanCard.svelte';
 	import { createLoansListStore } from '$lib/composables';
-	import { onMount } from 'svelte';
 
-	export let onLoad: (loan: SavedLoan) => void;
+	type Props = {
+		onLoad: (loan: SavedLoan) => void;
+	};
+
+	let { onLoad }: Props = $props();
 
 	const loansStore = createLoansListStore();
-	let showSavedLoans = false;
 
-	onMount(() => {
+	$effect(() => {
 		loansStore.refresh();
 	});
 
@@ -36,20 +38,15 @@
 		<div class="saved-loans-header">
 			<h2>Prêts sauvegardés ({$loansStore.length})</h2>
 			<div class="header-actions">
-				<button on:click={() => (showSavedLoans = !showSavedLoans)} class="btn-secondary">
-					{showSavedLoans ? '▼ Masquer' : '▶ Afficher'}
-				</button>
-				<button on:click={handleExportLoans} class="btn-secondary"> 📥 Exporter </button>
+				<button onclick={handleExportLoans} class="btn-secondary"> 📥 Exporter </button>
 			</div>
 		</div>
 
-		{#if showSavedLoans}
-			<div class="loans-grid">
-				{#each $loansStore as loan}
-					<LoanCard {loan} {onLoad} onDelete={handleDelete} onClone={handleClone} />
-				{/each}
-			</div>
-		{/if}
+		<div class="loans-grid">
+			{#each $loansStore as loan (loan.id)}
+				<LoanCard {loan} {onLoad} onDelete={handleDelete} onClone={handleClone} />
+			{/each}
+		</div>
 	</div>
 {/if}
 

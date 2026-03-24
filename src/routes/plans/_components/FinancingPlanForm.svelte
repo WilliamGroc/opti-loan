@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { createLoansListStore, createPlansListStore } from '$lib/composables';
-	import { onMount } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	const loansStore = createLoansListStore();
 	const plansStore = createPlansListStore();
 
-	let financingPlanName = '';
-	let selectedLoansForPlan: Set<string> = new Set();
+	let financingPlanName = $state('');
+	let selectedLoansForPlan = $state<Set<string>>(new Set());
 
-	onMount(() => {
+	$effect(() => {
 		loansStore.refresh();
 		plansStore.refresh();
 	});
@@ -28,7 +28,7 @@
 		plansStore.create(financingPlanName, selectedLoans);
 
 		financingPlanName = '';
-		selectedLoansForPlan = new Set();
+		selectedLoansForPlan = new SvelteSet();
 		alert('Plan de financement créé avec succès !');
 	}
 </script>
@@ -48,12 +48,12 @@
 		<div class="loans-selection">
 			<h4>Sélectionner les prêts à inclure :</h4>
 			<div class="selection-list">
-				{#each $loansStore as loan}
+				{#each $loansStore as loan (loan.id)}
 					<label class="loan-checkbox">
 						<input
 							type="checkbox"
 							checked={selectedLoansForPlan.has(loan.id)}
-							on:change={(e) => {
+							onchange={(e) => {
 								if ((e.target as HTMLInputElement)?.checked) {
 									selectedLoansForPlan.add(loan.id);
 								} else {
@@ -71,7 +71,7 @@
 			</div>
 		</div>
 
-		<button on:click={handleCreateFinancingPlan} class="btn-create-plan"> 📋 Créer le plan </button>
+		<button onclick={handleCreateFinancingPlan} class="btn-create-plan"> 📋 Créer le plan </button>
 	</div>
 {:else}
 	<p class="info-message">
