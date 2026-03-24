@@ -3,6 +3,7 @@
 	import FinancingPlanForm from './_components/FinancingPlanForm.svelte';
 	import FinancingPlansList from './_components/FinancingPlansList.svelte';
 	import { createPlansListStore } from '$lib/composables';
+	import { loadLoans } from '$lib/services';
 
 	const siteName = 'Calcul Prêt';
 	const siteUrl = 'https://www.calcul-pret.com';
@@ -27,6 +28,7 @@
 		}
 	};
 
+	const savedLoans = loadLoans();
 	const plansStore = createPlansListStore();
 
 	$effect(() => {
@@ -64,7 +66,7 @@
 			<p class="hero-subtitle">Gérez et optimisez vos plans de financement multi-prêts</p>
 		</header>
 
-		{#if $plansStore.length === 0}
+		{#if savedLoans.length === 0}
 			<!-- État vide -->
 			<PageSection title="Commencer" icon="📋">
 				<EmptyState
@@ -91,51 +93,50 @@
 			<PageSection title="Mes plans" subtitle="{$plansStore.length} plan(s) créé(s)" icon="📋">
 				<FinancingPlansList />
 			</PageSection>
-
-			<!-- Guide d'utilisation -->
-			<PageSection
-				title="Comment ça marche ?"
-				subtitle="Guide d'utilisation"
-				icon="💡"
-				variant="secondary"
-				collapsible={true}
-				defaultExpanded={false}
-			>
-				<div class="guide-content">
-					<div class="guide-step">
-						<span class="step-number">1</span>
-						<div>
-							<h4>Créez vos prêts</h4>
-							<p>Allez sur le calculateur et créez plusieurs prêts que vous souhaitez combiner.</p>
-						</div>
-					</div>
-					<div class="guide-step">
-						<span class="step-number">2</span>
-						<div>
-							<h4>Créez un plan</h4>
-							<p>Sélectionnez plusieurs prêts et donnez un nom à votre plan de financement.</p>
-						</div>
-					</div>
-					<div class="guide-step">
-						<span class="step-number">3</span>
-						<div>
-							<h4>Analysez et optimisez</h4>
-							<p>
-								Consultez le tableau d'amortissement et comparez avec la version optimisée pour
-								économiser sur les intérêts.
-							</p>
-						</div>
-					</div>
-					<div class="guide-step">
-						<span class="step-number">4</span>
-						<div>
-							<h4>Exportez vos données</h4>
-							<p>Téléchargez vos plans en format CSV pour les utiliser dans d'autres outils.</p>
-						</div>
+		{/if}
+		<!-- Guide d'utilisation -->
+		<PageSection
+			title="Comment ça marche ?"
+			subtitle="Guide d'utilisation"
+			icon="💡"
+			variant="secondary"
+			collapsible={true}
+			defaultExpanded={false}
+		>
+			<div class="guide-content">
+				<div class="guide-step">
+					<span class="step-number">1</span>
+					<div>
+						<h4>Créez vos prêts</h4>
+						<p>Allez sur le calculateur et créez plusieurs prêts que vous souhaitez combiner.</p>
 					</div>
 				</div>
-			</PageSection>
-		{/if}
+				<div class="guide-step">
+					<span class="step-number">2</span>
+					<div>
+						<h4>Créez un plan</h4>
+						<p>Sélectionnez plusieurs prêts et donnez un nom à votre plan de financement.</p>
+					</div>
+				</div>
+				<div class="guide-step">
+					<span class="step-number">3</span>
+					<div>
+						<h4>Analysez et optimisez</h4>
+						<p>
+							Consultez le tableau d'amortissement et comparez avec la version optimisée pour
+							économiser sur les intérêts.
+						</p>
+					</div>
+				</div>
+				<div class="guide-step">
+					<span class="step-number">4</span>
+					<div>
+						<h4>Exportez vos données</h4>
+						<p>Téléchargez vos plans en format CSV pour les utiliser dans d'autres outils.</p>
+					</div>
+				</div>
+			</div>
+		</PageSection>
 	</div>
 </div>
 

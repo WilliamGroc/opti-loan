@@ -3,92 +3,43 @@
 	import { createPlansListStore } from '$lib/composables';
 
 	const plansStore = createPlansListStore();
-	let showFinancingPlans = $state(false);
 
 	$effect(() => {
 		plansStore.refresh();
 	});
-
-	function handleDelete(index: number) {
-		if (confirm('Voulez-vous vraiment supprimer ce plan ?')) {
-			plansStore.remove(index);
-		}
-	}
 </script>
 
 {#if $plansStore.length > 0}
 	<div class="plans-list">
-		<div class="plans-header">
-			<h3>Plans créés ({$plansStore.length})</h3>
-			<button onclick={() => (showFinancingPlans = !showFinancingPlans)} class="btn-secondary">
-				{showFinancingPlans ? '▼ Masquer' : '▶ Afficher'}
-			</button>
+		<div class="plans-grid">
+			{#each $plansStore as plan (plan.id)}
+				<FinancingPlanCard {plan} />
+			{/each}
 		</div>
-
-		{#if showFinancingPlans}
-			<div class="plans-grid">
-				{#each $plansStore as plan, index (plan.name)}
-					<FinancingPlanCard {plan} {index} onDelete={handleDelete} />
-				{/each}
-			</div>
-		{/if}
 	</div>
+{:else}
+	<p class="empty-message">Aucun plan créé pour le moment.</p>
 {/if}
 
 <style>
 	.plans-list {
-		margin-top: 2rem;
-		padding-top: 2rem;
-		border-top: 2px solid #e0e0e0;
+		width: 100%;
 	}
 
-	.plans-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 1.5rem;
-	}
-
-	h3 {
-		color: #333;
-		font-size: 1.2rem;
-		margin: 0;
-	}
-
-	.btn-secondary {
-		padding: 0.5rem 1rem;
-		background: white;
-		color: #667eea;
-		border: 2px solid #667eea;
-		border-radius: 8px;
-		font-size: 0.9rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn-secondary:hover {
-		background: #667eea;
-		color: white;
+	.empty-message {
+		text-align: center;
+		color: #718096;
+		font-size: 1.1rem;
+		padding: 2rem;
 	}
 
 	.plans-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
 		gap: 1.5rem;
-		margin-top: 1rem;
 	}
 
 	@media (max-width: 768px) {
-		.plans-header {
-			flex-direction: column;
-			align-items: stretch;
-		}
-
-		.plans-header button {
-			width: 100%;
-		}
-
 		.plans-grid {
 			grid-template-columns: 1fr;
 		}

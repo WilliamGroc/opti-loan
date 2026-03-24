@@ -23,6 +23,7 @@ export interface SavedLoan {
 }
 
 export interface FinancingPlan {
+  id: string;
   name: string;
   selectedLoans: SavedLoan[];
   createdDate: string;

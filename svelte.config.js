@@ -8,7 +8,7 @@ const config = {
     adapter: adapter({
       pages: 'build',
       assets: 'build',
-      fallback: undefined,
+      fallback: 'index.html', // Support pour les routes dynamiques comme /plans/[id]
       precompress: false,
       strict: true
     }),

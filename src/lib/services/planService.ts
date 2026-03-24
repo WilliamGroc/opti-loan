@@ -34,6 +34,7 @@ export function deleteFinancingPlan(plans: FinancingPlan[], index: number): Fina
  */
 export function clonePlan(plan: FinancingPlan, newName: string): FinancingPlan {
   return {
+    id: `plan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     name: newName.trim(),
     selectedLoans: [...plan.selectedLoans],
     createdDate: new Date().toISOString()
@@ -72,10 +73,28 @@ export function createFinancingPlan(
   selectedLoans: SavedLoan[]
 ): FinancingPlan[] {
   const plan: FinancingPlan = {
+    id: `plan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     name: planName,
     selectedLoans: selectedLoans,
     createdDate: new Date().toISOString()
   };
 
   return addFinancingPlan(plans, plan);
+}
+
+/**
+ * Trouve un plan de financement par ID
+ */
+export function getFinancingPlanById(id: string): FinancingPlan | undefined {
+  const plans = loadFinancingPlans();
+  return plans.find(plan => plan.id === id);
+}
+
+/**
+ * Supprime un plan de financement par ID
+ */
+export function deleteFinancingPlanById(id: string): void {
+  const plans = loadFinancingPlans();
+  const updated = plans.filter(plan => plan.id !== id);
+  saveFinancingPlans(updated);
 }

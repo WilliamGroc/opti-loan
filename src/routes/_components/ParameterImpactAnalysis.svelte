@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Button, PageSection } from '$lib/components';
 	import { calculateLoan } from '$lib/services';
 	import type { MonthlyPaymentPeriod } from '$lib/services';
 
@@ -24,7 +25,6 @@
 	let currentAmount = $state(baseAmount);
 	let currentRate = $state(baseAnnualRate);
 	let currentDuration = $state(baseDurationYears);
-	let hidden = $state(true);
 
 	// Calcul de base (référence)
 	let baseResult = $state({
@@ -123,160 +123,147 @@
 	});
 </script>
 
-<div class="impact-analysis">
-	<div class="header">
-		<h2>🎛️ Simulateur Interactif</h2>
-		<button onclick={() => (hidden = !hidden)}>
-			{#if hidden}👁️ Montrer{:else}🙈 Cacher{/if}
-		</button>
+<PageSection
+	title="Analyse d'impact"
+	subtitle="Visualisez l'impact des variations de paramètres"
+	icon="📈"
+	collapsible={true}
+	defaultExpanded={false}
+	variant="secondary"
+>
+	<Button variant="secondary" onclick={resetToBase}>🔄 Réinitialiser</Button>
+	<div class="sliders-container">
+		<!-- Slider Montant -->
+		<div class="slider-group">
+			<label for="amount-slider">
+				<span class="label-text">💰 Montant du prêt</span>
+				<span class="value-display">{currentAmount.toLocaleString('fr-FR')} €</span>
+			</label>
+			<input
+				id="amount-slider"
+				type="range"
+				bind:value={currentAmount}
+				min={minAmount}
+				max={maxAmount}
+				step="1000"
+				class="slider"
+			/>
+			<div class="range-labels">
+				<span>{minAmount.toLocaleString('fr-FR')} €</span>
+				<span class="base-label">Base: {baseAmount.toLocaleString('fr-FR')} €</span>
+				<span>{maxAmount.toLocaleString('fr-FR')} €</span>
+			</div>
+		</div>
+
+		<!-- Slider Taux -->
+		<div class="slider-group">
+			<label for="rate-slider">
+				<span class="label-text">📈 Taux d'intérêt annuel</span>
+				<span class="value-display">{currentRate.toFixed(2)} %</span>
+			</label>
+			<input
+				id="rate-slider"
+				type="range"
+				bind:value={currentRate}
+				min={minRate}
+				max={maxRate}
+				step="0.01"
+				class="slider"
+			/>
+			<div class="range-labels">
+				<span>{minRate.toFixed(2)} %</span>
+				<span class="base-label">Base: {baseAnnualRate.toFixed(2)} %</span>
+				<span>{maxRate.toFixed(2)} %</span>
+			</div>
+		</div>
+
+		<!-- Slider Durée -->
+		<div class="slider-group">
+			<label for="duration-slider">
+				<span class="label-text">⏱️ Durée</span>
+				<span class="value-display">{currentDuration} ans</span>
+			</label>
+			<input
+				id="duration-slider"
+				type="range"
+				bind:value={currentDuration}
+				min={minDuration}
+				max={maxDuration}
+				step="1"
+				class="slider"
+			/>
+			<div class="range-labels">
+				<span>{minDuration} ans</span>
+				<span class="base-label">Base: {baseDurationYears} ans</span>
+				<span>{maxDuration} ans</span>
+			</div>
+		</div>
 	</div>
-	{#if hidden}
-		<p>
-			Cliquez sur "Montrer l'analyse d'impact" pour explorer comment les variations des paramètres
-			affectent votre prêt.
-		</p>
-	{:else}
-		<button class="reset-btn" onclick={resetToBase}> 🔄 Réinitialiser </button>
-		<p class="description">
-			Utilisez les curseurs pour faire varier les paramètres de votre prêt et visualisez
-			instantanément l'impact sur la mensualité, le coût total et les intérêts.
-		</p>
 
-		<div class="sliders-container">
-			<!-- Slider Montant -->
-			<div class="slider-group">
-				<label for="amount-slider">
-					<span class="label-text">💰 Montant du prêt</span>
-					<span class="value-display">{currentAmount.toLocaleString('fr-FR')} €</span>
-				</label>
-				<input
-					id="amount-slider"
-					type="range"
-					bind:value={currentAmount}
-					min={minAmount}
-					max={maxAmount}
-					step="1000"
-					class="slider"
-				/>
-				<div class="range-labels">
-					<span>{minAmount.toLocaleString('fr-FR')} €</span>
-					<span class="base-label">Base: {baseAmount.toLocaleString('fr-FR')} €</span>
-					<span>{maxAmount.toLocaleString('fr-FR')} €</span>
+	<div class="results-grid">
+		<!-- Mensualité -->
+		<div class="result-card">
+			<h3>💳 Mensualité</h3>
+			<div class="result-value">{currentResult.monthlyPayment.toLocaleString('fr-FR')} €</div>
+			<div class="result-comparison">
+				<div class="base-value">
+					Base: {baseResult.monthlyPayment.toLocaleString('fr-FR')} €
 				</div>
-			</div>
-
-			<!-- Slider Taux -->
-			<div class="slider-group">
-				<label for="rate-slider">
-					<span class="label-text">📈 Taux d'intérêt annuel</span>
-					<span class="value-display">{currentRate.toFixed(2)} %</span>
-				</label>
-				<input
-					id="rate-slider"
-					type="range"
-					bind:value={currentRate}
-					min={minRate}
-					max={maxRate}
-					step="0.01"
-					class="slider"
-				/>
-				<div class="range-labels">
-					<span>{minRate.toFixed(2)} %</span>
-					<span class="base-label">Base: {baseAnnualRate.toFixed(2)} %</span>
-					<span>{maxRate.toFixed(2)} %</span>
-				</div>
-			</div>
-
-			<!-- Slider Durée -->
-			<div class="slider-group">
-				<label for="duration-slider">
-					<span class="label-text">⏱️ Durée</span>
-					<span class="value-display">{currentDuration} ans</span>
-				</label>
-				<input
-					id="duration-slider"
-					type="range"
-					bind:value={currentDuration}
-					min={minDuration}
-					max={maxDuration}
-					step="1"
-					class="slider"
-				/>
-				<div class="range-labels">
-					<span>{minDuration} ans</span>
-					<span class="base-label">Base: {baseDurationYears} ans</span>
-					<span>{maxDuration} ans</span>
+				<div
+					class="impact {getImpactClass(currentResult.monthlyPayment, baseResult.monthlyPayment)}"
+				>
+					{formatDiff(currentResult.monthlyPayment, baseResult.monthlyPayment)}
+					<span class="impact-percent">
+						({formatPercentDiff(currentResult.monthlyPayment, baseResult.monthlyPayment)})
+					</span>
 				</div>
 			</div>
 		</div>
 
-		<div class="results-grid">
-			<!-- Mensualité -->
-			<div class="result-card">
-				<h3>💳 Mensualité</h3>
-				<div class="result-value">{currentResult.monthlyPayment.toLocaleString('fr-FR')} €</div>
-				<div class="result-comparison">
-					<div class="base-value">
-						Base: {baseResult.monthlyPayment.toLocaleString('fr-FR')} €
-					</div>
-					<div
-						class="impact {getImpactClass(currentResult.monthlyPayment, baseResult.monthlyPayment)}"
-					>
-						{formatDiff(currentResult.monthlyPayment, baseResult.monthlyPayment)}
-						<span class="impact-percent">
-							({formatPercentDiff(currentResult.monthlyPayment, baseResult.monthlyPayment)})
-						</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- Coût Total -->
-			<div class="result-card">
-				<h3>💰 Coût Total</h3>
-				<div class="result-value">{currentResult.totalCost.toLocaleString('fr-FR')} €</div>
-				<div class="result-comparison">
-					<div class="base-value">Base: {baseResult.totalCost.toLocaleString('fr-FR')} €</div>
-					<div class="impact {getImpactClass(currentResult.totalCost, baseResult.totalCost)}">
-						{formatDiff(currentResult.totalCost, baseResult.totalCost)}
-						<span class="impact-percent">
-							({formatPercentDiff(currentResult.totalCost, baseResult.totalCost)})
-						</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- Intérêts -->
-			<div class="result-card">
-				<h3>📊 Intérêts Totaux</h3>
-				<div class="result-value">{currentResult.totalInterest.toLocaleString('fr-FR')} €</div>
-				<div class="result-comparison">
-					<div class="base-value">Base: {baseResult.totalInterest.toLocaleString('fr-FR')} €</div>
-					<div
-						class="impact {getImpactClass(currentResult.totalInterest, baseResult.totalInterest)}"
-					>
-						{formatDiff(currentResult.totalInterest, baseResult.totalInterest)}
-						<span class="impact-percent">
-							({formatPercentDiff(currentResult.totalInterest, baseResult.totalInterest)})
-						</span>
-					</div>
+		<!-- Coût Total -->
+		<div class="result-card">
+			<h3>💰 Coût Total</h3>
+			<div class="result-value">{currentResult.totalCost.toLocaleString('fr-FR')} €</div>
+			<div class="result-comparison">
+				<div class="base-value">Base: {baseResult.totalCost.toLocaleString('fr-FR')} €</div>
+				<div class="impact {getImpactClass(currentResult.totalCost, baseResult.totalCost)}">
+					{formatDiff(currentResult.totalCost, baseResult.totalCost)}
+					<span class="impact-percent">
+						({formatPercentDiff(currentResult.totalCost, baseResult.totalCost)})
+					</span>
 				</div>
 			</div>
 		</div>
 
-		<div class="legend">
-			<h3>💡 Interprétation</h3>
-			<ul>
-				<li>
-					<span class="legend-positive">Vert</span> : Impact positif (réduction par rapport à la base)
-				</li>
-				<li>
-					<span class="legend-negative">Rouge</span> : Impact négatif (augmentation par rapport à la base)
-				</li>
-				<li>Ajustez les curseurs pour explorer différents scénarios de prêt</li>
-			</ul>
+		<!-- Intérêts -->
+		<div class="result-card">
+			<h3>📊 Intérêts Totaux</h3>
+			<div class="result-value">{currentResult.totalInterest.toLocaleString('fr-FR')} €</div>
+			<div class="result-comparison">
+				<div class="base-value">Base: {baseResult.totalInterest.toLocaleString('fr-FR')} €</div>
+				<div class="impact {getImpactClass(currentResult.totalInterest, baseResult.totalInterest)}">
+					{formatDiff(currentResult.totalInterest, baseResult.totalInterest)}
+					<span class="impact-percent">
+						({formatPercentDiff(currentResult.totalInterest, baseResult.totalInterest)})
+					</span>
+				</div>
+			</div>
 		</div>
-	{/if}
-</div>
+	</div>
+
+	<div class="legend">
+		<h3>💡 Interprétation</h3>
+		<ul>
+			<li>
+				<span class="legend-positive">Vert</span> : Impact positif (réduction par rapport à la base)
+			</li>
+			<li>
+				<span class="legend-negative">Rouge</span> : Impact négatif (augmentation par rapport à la base)
+			</li>
+			<li>Ajustez les curseurs pour explorer différents scénarios de prêt</li>
+		</ul>
+	</div>
+</PageSection>
 
 <style>
 	.impact-analysis {
@@ -294,12 +281,6 @@
 		margin-bottom: 0.5rem;
 		flex-wrap: wrap;
 		gap: 1rem;
-	}
-
-	h2 {
-		color: #333;
-		font-size: 1.8rem;
-		margin: 0;
 	}
 
 	.reset-btn {
@@ -530,10 +511,6 @@
 		.header {
 			flex-direction: column;
 			align-items: stretch;
-		}
-
-		h2 {
-			font-size: 1.5rem;
 		}
 
 		.reset-btn {

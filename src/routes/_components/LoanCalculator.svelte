@@ -149,24 +149,14 @@
 		</div>
 	</PageSection>
 
-	<!-- Analyse d'impact (pliable) -->
-	<PageSection
-		title="Analyse d'impact"
-		subtitle="Visualisez l'impact des variations de paramètres"
-		icon="📈"
-		collapsible={true}
-		defaultExpanded={false}
-		variant="secondary"
-	>
-		<ParameterImpactAnalysis
-			baseAmount={amount}
-			baseAnnualRate={annualRate}
-			baseDurationYears={durationYears}
-			{startDate}
-			{calculationMode}
-			{paymentPeriods}
-		/>
-	</PageSection>
+	<ParameterImpactAnalysis
+		baseAmount={amount}
+		baseAnnualRate={annualRate}
+		baseDurationYears={durationYears}
+		{startDate}
+		{calculationMode}
+		{paymentPeriods}
+	/>
 </div>
 
 <style>

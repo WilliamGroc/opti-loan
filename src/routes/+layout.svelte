@@ -2,6 +2,7 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { PWAInstallPrompt } from '$lib/components';
+	import { resolve } from '$app/paths';
 
 	let { children } = $props();
 
@@ -30,7 +31,7 @@
 	<footer class="site-footer">
 		<div class="footer-content">
 			<p>&copy; 2026 Calcul-pret.com - Tous droits réservés</p>
-			<a href="/mentions-legales" class="footer-link">Mentions légales</a>
+			<a href={resolve('/mentions-legales')} class="footer-link">Mentions légales</a>
 		</div>
 	</footer>
 </div>

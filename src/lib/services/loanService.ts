@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import type { SavedLoan, MonthlyPaymentPeriod } from './types';
 import { loadFromStorage, saveToStorage, exportAsJSON } from './storageService';
 import { calculateStandardMonthlyPayment } from './utils';
-import { getMonthlyPaymentForMonth } from './paymentService';
 
 /**
  * Charge les prêts depuis le localStorage

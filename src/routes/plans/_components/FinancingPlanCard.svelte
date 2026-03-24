@@ -2,38 +2,19 @@
 	import { format } from 'date-fns';
 	import { fr } from 'date-fns/locale';
 	import type { FinancingPlan } from '$lib/services';
-	import { calculatePlanAmortization } from '$lib/services';
+	import { deleteFinancingPlanById } from '$lib/services';
 
 	type Props = {
 		plan: FinancingPlan;
-		index: number;
-		onDelete: (index: number) => void;
 	};
 
-	let { plan, index, onDelete }: Props = $props();
+	let { plan }: Props = $props();
 
-	let selectedPlanIndex = $state(-1);
-	let planAmortizationTable = $state<
-		Array<{
-			month: number;
-			date: Date;
-			loansData: Array<{
-				name: string;
-				monthlyPayment: number;
-				principal: number;
-				interest: number;
-			}>;
-			totalMonthlyPayment: number;
-			totalPrincipal: number;
-			totalInterest: number;
-			totalRemaining: number;
-		}>
-	>([]);
-
-	function handleViewDetails() {
-		selectedPlanIndex = selectedPlanIndex === index ? -1 : index;
-		if (selectedPlanIndex !== -1) {
-			planAmortizationTable = calculatePlanAmortization(plan);
+	function handleDelete() {
+		if (confirm(`Voulez-vous vraiment supprimer le plan "${plan.name}" ?`)) {
+			deleteFinancingPlanById(plan.id);
+			// Trigger page refresh
+			window.location.reload();
 		}
 	}
 </script>
@@ -41,7 +22,7 @@
 <div class="plan-card">
 	<div class="plan-card-header">
 		<h4>{plan.name}</h4>
-		<button onclick={() => onDelete(index)} class="btn-delete" title="Supprimer"> 🗑️ </button>
+		<button onclick={handleDelete} class="btn-delete" title="Supprimer"> 🗑️ </button>
 	</div>
 
 	<div class="plan-details">
@@ -76,71 +57,7 @@
 		</ul>
 	</div>
 
-	<button onclick={handleViewDetails} class="btn-view-details">
-		{selectedPlanIndex === index ? '▼ Masquer détails' : '▶ Voir détails'}
-	</button>
-
-	{#if selectedPlanIndex === index}
-		<div class="plan-amortization">
-			<h5>Tableau de synthèse du plan</h5>
-			<div class="plan-summary">
-				<div class="summary-card">
-					<span class="label">Mensualité totale moyenne</span>
-					<span class="value">
-						{(
-							planAmortizationTable.reduce((sum, row) => sum + row.totalMonthlyPayment, 0) /
-							Math.max(planAmortizationTable.length, 1)
-						).toFixed(2)} €
-					</span>
-				</div>
-				<div class="summary-card">
-					<span class="label">Total intérêts</span>
-					<span class="value">
-						{planAmortizationTable.reduce((sum, row) => sum + row.totalInterest, 0).toFixed(2)} €
-					</span>
-				</div>
-				<div class="summary-card">
-					<span class="label">Durée totale</span>
-					<span class="value">
-						{Math.ceil(planAmortizationTable.length / 12)} ans
-					</span>
-				</div>
-			</div>
-
-			<div class="table-wrapper">
-				<table class="plan-table">
-					<thead>
-						<tr>
-							<th>Mois</th>
-							<th>Date</th>
-							<th>Mensualité totale</th>
-							<th>Capital total</th>
-							<th>Intérêts totaux</th>
-							<th>Restant dû</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each planAmortizationTable as row, i (row.date.getTime())}
-							{#if i < 12 || i >= planAmortizationTable.length - 12 || i % 12 === 0}
-								<tr>
-									<td>{row.month}</td>
-									<td>{format(row.date, 'MMM yyyy', { locale: fr })}</td>
-									<td>{row.totalMonthlyPayment.toFixed(2)} €</td>
-									<td>{row.totalPrincipal.toFixed(2)} €</td>
-									<td>{row.totalInterest.toFixed(2)} €</td>
-									<td>{row.totalRemaining.toFixed(2)} €</td>
-								</tr>
-							{:else if i === 12}
-								<tr class="ellipsis">
-									<td colspan="6">...</td>
-								</tr>
-							{/if}
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		</div>
-	{/if}
+	<a href="/plans/{plan.id}" class="btn-view-details"> 👁️ Voir les détails </a>
 </div>
 
 <style>
@@ -247,6 +164,7 @@
 	}
 
 	.btn-view-details {
+		display: block;
 		width: 100%;
 		padding: 0.75rem;
 		background: white;
@@ -257,97 +175,12 @@
 		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.2s;
+		text-decoration: none;
+		text-align: center;
 	}
 
 	.btn-view-details:hover {
 		background: #667eea;
 		color: white;
-	}
-
-	.plan-amortization {
-		margin-top: 1.5rem;
-		padding-top: 1.5rem;
-		border-top: 2px solid #e0e0e0;
-	}
-
-	h5 {
-		color: #555;
-		font-size: 1rem;
-		margin-bottom: 0.5rem;
-		margin-top: 0;
-	}
-
-	.plan-summary {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: 1rem;
-		margin-bottom: 1.5rem;
-	}
-
-	.summary-card {
-		background: white;
-		padding: 1rem;
-		border-radius: 8px;
-		border: 1px solid #e0e0e0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
-	}
-
-	.summary-card .label {
-		color: #666;
-		font-size: 0.85rem;
-		margin-bottom: 0.5rem;
-	}
-
-	.summary-card .value {
-		color: #667eea;
-		font-size: 1.3rem;
-		font-weight: 700;
-	}
-
-	.table-wrapper {
-		overflow-x: auto;
-	}
-
-	.plan-table {
-		width: 100%;
-		border-collapse: collapse;
-		margin-top: 1rem;
-		font-size: 0.9rem;
-	}
-
-	.plan-table th {
-		background: #667eea;
-		color: white;
-		padding: 0.75rem;
-		text-align: left;
-		font-weight: 600;
-	}
-
-	.plan-table td {
-		padding: 0.75rem;
-		border-bottom: 1px solid #e0e0e0;
-	}
-
-	.plan-table tbody tr:hover {
-		background: #f5f5f5;
-	}
-
-	tr.ellipsis td {
-		text-align: center;
-		font-weight: bold;
-		color: #999;
-	}
-
-	@media (max-width: 768px) {
-		.plan-summary {
-			grid-template-columns: 1fr;
-		}
-
-		.summary-card {
-			padding: 1rem;
-		}
 	}
 </style>
