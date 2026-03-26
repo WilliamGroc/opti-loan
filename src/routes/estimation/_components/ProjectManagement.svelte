@@ -347,6 +347,7 @@
 		margin-top: 1rem;
 		padding-top: 1rem;
 		border-top: 2px solid #f7fafc;
+		flex-wrap: wrap;
 	}
 
 	.action-button {

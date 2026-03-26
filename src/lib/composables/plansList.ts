@@ -3,7 +3,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { FinancingPlan, SavedLoan } from '../services/types';
+import type { FinancingPlan } from '../services/types';
 import {
   loadFinancingPlans,
   deleteFinancingPlan,
@@ -23,7 +23,7 @@ export function createPlansListStore() {
       set(loadFinancingPlans());
     },
 
-    create: (planName: string, selectedLoans: SavedLoan[]) => {
+    create: (planName: string, selectedLoans: string[]) => {
       update(plans => {
         const updated = createFinancingPlan(plans, planName, selectedLoans);
         return updated;

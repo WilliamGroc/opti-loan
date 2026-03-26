@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { format } from 'date-fns';
 	import { fr } from 'date-fns/locale';
-	import type { MonthlyPaymentPeriod } from '$lib/services';
+	import type { MonthlyPaymentPeriod, SavedLoan } from '$lib/services';
 	import { calculateLoan as calculateLoanService } from '$lib/services';
 	import { createLoansListStore } from '$lib/composables';
 	import { PageSection } from '$lib/components';
@@ -10,6 +10,13 @@
 	import ParameterImpactAnalysis from './ParameterImpactAnalysis.svelte';
 
 	const loansStore = createLoansListStore();
+
+	type Props = {
+		selectedLoan?: SavedLoan | null;
+		editingLoanId?: string | null;
+	};
+
+	let { selectedLoan = $bindable(null), editingLoanId = $bindable(null) }: Props = $props();
 
 	let amount = $state(200000);
 	let annualRate = $state(1.5);
@@ -56,8 +63,8 @@
 			return;
 		}
 
-		loansStore.add({
-			name: loanName,
+		const loanData = {
+			name: loanName.trim(),
 			amount,
 			annualRate,
 			durationYears,
@@ -65,16 +72,56 @@
 			startDate,
 			calculationMode,
 			paymentPeriods: calculationMode === 'variable' ? [...paymentPeriods] : undefined
-		});
-		loanName = '';
+		};
 
-		// Feedback visuel
+		if (editingLoanId) {
+			loansStore.update(editingLoanId, loanData);
+			showNotification('✅ Prêt mis à jour avec succès !');
+		} else {
+			loansStore.add(loanData);
+			loanName = '';
+			showNotification('✅ Prêt sauvegardé avec succès !');
+		}
+	}
+
+	function showNotification(message: string) {
 		const notification = document.createElement('div');
 		notification.className = 'save-notification';
-		notification.textContent = '✅ Prêt sauvegardé avec succès !';
+		notification.textContent = message;
 		document.body.appendChild(notification);
 		setTimeout(() => notification.remove(), 3000);
 	}
+
+	function loadSelectedLoan(loan: SavedLoan) {
+		amount = loan.amount;
+		annualRate = loan.annualRate;
+		durationYears = loan.durationYears;
+		monthlyPayment = loan.monthlyPayment;
+		startDate = loan.startDate;
+		calculationMode = loan.calculationMode;
+		paymentPeriods = loan.paymentPeriods ? [...loan.paymentPeriods] : [];
+		loanName = loan.name;
+		editingLoanId = loan.id;
+	}
+
+	function resetForm() {
+		amount = 200000;
+		annualRate = 1.5;
+		durationYears = 20;
+		monthlyPayment = 0;
+		startDate = format(new Date(), 'yyyy-MM-dd');
+		calculationMode = 'payment';
+		paymentPeriods = [];
+		loanName = '';
+		editingLoanId = null;
+		selectedLoan = null;
+	}
+
+	$effect(() => {
+		if (selectedLoan && selectedLoan.id !== editingLoanId) {
+			loadSelectedLoan(selectedLoan);
+		}
+	});
 
 	$effect(() => {
 		handleCalculateLoan();
@@ -98,6 +145,9 @@
 			bind:calculationMode
 			bind:paymentPeriods
 			bind:loanName
+			isEditing={editingLoanId !== null}
+			editingLoanName={selectedLoan?.name ?? loanName}
+			onResetForm={resetForm}
 			onSaveLoan={handleSaveLoan}
 		/>
 	</PageSection>

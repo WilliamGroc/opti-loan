@@ -100,7 +100,7 @@
 			<!-- Prêts inclus -->
 			<PageSection title="Prêts inclus" subtitle="{plan.selectedLoans.length} prêt(s)" icon="💰">
 				<div class="loans-grid">
-					{#each plan.selectedLoans as loan (loan.id)}
+					{#each plan.loans as loan (loan.id)}
 						<div class="loan-item">
 							<h4>{loan.name}</h4>
 							<div class="loan-details">

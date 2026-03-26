@@ -24,7 +24,9 @@
 			return;
 		}
 
-		const selectedLoans = $loansStore.filter((loan) => selectedLoansForPlan.has(loan.id));
+		const selectedLoans = $loansStore
+			.filter((loan) => selectedLoansForPlan.has(loan.id))
+			.map((loan) => loan.id);
 		plansStore.create(financingPlanName, selectedLoans);
 
 		financingPlanName = '';

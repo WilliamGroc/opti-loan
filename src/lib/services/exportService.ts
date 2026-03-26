@@ -15,7 +15,7 @@ export function exportPlanAsCSV(plan: FinancingPlan, amortizationData: Amortizat
   csv += `Créé le: ${format(new Date(plan.createdDate), 'dd/MM/yyyy HH:mm', { locale: fr })}\n`;
   csv += `\nPrêts inclus:\n`;
 
-  plan.selectedLoans.forEach(loan => {
+  plan.loans?.forEach(loan => {
     csv += `- ${loan.name}: ${loan.amount.toLocaleString('fr-FR')} € (${loan.durationYears} ans, ${loan.annualRate}%)\n`;
   });
 
@@ -52,7 +52,7 @@ export function generatePlanSummary(plan: FinancingPlan, amortizationData: Amort
   summary += `Créé le: ${format(new Date(plan.createdDate), 'dd/MM/yyyy HH:mm', { locale: fr })}\n\n`;
 
   summary += `--- PRÊTS INCLUS ---\n`;
-  plan.selectedLoans.forEach((loan, index) => {
+  plan.loans?.forEach((loan, index) => {
     summary += `${index + 1}. ${loan.name}\n`;
     summary += `   Montant: ${loan.amount.toLocaleString('fr-FR')} €\n`;
     summary += `   Taux: ${loan.annualRate}%\n`;

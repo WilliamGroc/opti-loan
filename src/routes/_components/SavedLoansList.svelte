@@ -5,9 +5,10 @@
 
 	type Props = {
 		onLoad: (loan: SavedLoan) => void;
+		editingLoanId?: string | null;
 	};
 
-	let { onLoad }: Props = $props();
+	let { onLoad, editingLoanId = null }: Props = $props();
 
 	const loansStore = createLoansListStore();
 
@@ -38,13 +39,20 @@
 		<div class="saved-loans-header">
 			<h2>Prêts sauvegardés ({$loansStore.length})</h2>
 			<div class="header-actions">
+				<p class="load-hint">Chargez un prêt pour le modifier puis mettez-le à jour.</p>
 				<button onclick={handleExportLoans} class="btn-secondary"> 📥 Exporter </button>
 			</div>
 		</div>
 
 		<div class="loans-grid">
 			{#each $loansStore as loan (loan.id)}
-				<LoanCard {loan} {onLoad} onDelete={handleDelete} onClone={handleClone} />
+				<LoanCard
+					{loan}
+					{onLoad}
+					onDelete={handleDelete}
+					onClone={handleClone}
+					isActive={editingLoanId === loan.id}
+				/>
 			{/each}
 		</div>
 	</div>
@@ -77,6 +85,14 @@
 	.header-actions {
 		display: flex;
 		gap: 0.5rem;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.load-hint {
+		margin: 0;
+		color: #4a5568;
+		font-size: 0.9rem;
 	}
 
 	.btn-secondary {

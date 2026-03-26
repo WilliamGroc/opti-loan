@@ -3,6 +3,7 @@
 	import { fr } from 'date-fns/locale';
 	import type { FinancingPlan } from '$lib/services';
 	import { deleteFinancingPlanById } from '$lib/services';
+	import { resolve } from '$app/paths';
 
 	type Props = {
 		plan: FinancingPlan;
@@ -33,7 +34,7 @@
 		<div class="plan-detail">
 			<span class="label">Montant total:</span>
 			<span class="value highlight"
-				>{plan.selectedLoans.reduce((sum, loan) => sum + loan.amount, 0).toLocaleString('fr-FR')} €</span
+				>{plan.loans?.reduce((sum, loan) => sum + loan.amount, 0).toLocaleString('fr-FR')} €</span
 			>
 		</div>
 		<div class="plan-detail">
@@ -49,7 +50,7 @@
 	<div class="plan-loans-list">
 		<h5>Prêts inclus:</h5>
 		<ul>
-			{#each plan.selectedLoans as loan (loan.id)}
+			{#each plan.loans as loan (loan.id)}
 				<li>
 					{loan.name} - {loan.amount.toLocaleString('fr-FR')} € ({loan.durationYears} ans)
 				</li>
@@ -57,7 +58,7 @@
 		</ul>
 	</div>
 
-	<a href="/plans/{plan.id}" class="btn-view-details"> 👁️ Voir les détails </a>
+	<a href={resolve(`/plans/${plan.id}`)} class="btn-view-details"> 👁️ Voir les détails </a>
 </div>
 
 <style>

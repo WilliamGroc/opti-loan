@@ -140,6 +140,9 @@
 	.results-container,
 	.project-management-container {
 		margin-bottom: 2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
 	}
 
 	@media (max-width: 768px) {

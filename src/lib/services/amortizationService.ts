@@ -3,7 +3,7 @@
  */
 
 import { addMonths } from 'date-fns';
-import type { FinancingPlan, AmortizationRow, SavedLoan, LoanData, MonthlyPaymentPeriod } from './types';
+import type { FinancingPlan, AmortizationRow, SavedLoan, LoanData } from './types';
 import { getDateBounds, getMonthlyRate, getMonthsBetween, roundToZeroIfNegligible } from './utils';
 import { getMonthlyPaymentForMonth } from './paymentService';
 
@@ -92,8 +92,8 @@ function initializeLoanBalances(
  */
 export function calculatePlanAmortization(plan: FinancingPlan): AmortizationRow[] {
   const amortizationTable: AmortizationRow[] = [];
-  const { minStartDate, totalMonths } = getDateBounds(plan.selectedLoans);
-  const loanBalances = initializeLoanBalances(plan.selectedLoans, minStartDate);
+  const { minStartDate, totalMonths } = getDateBounds(plan.loans || []);
+  const loanBalances = initializeLoanBalances(plan.loans || [], minStartDate);
 
   for (let month = 1; month <= totalMonths; month++) {
     const currentDate = addMonths(minStartDate, month);
@@ -184,7 +184,7 @@ function distributeAvalancheBudget(
   budgetRemaining: number
 ): Map<LoanBalance, { interest: number; principal: number }> {
   const payments = new Map<LoanBalance, { interest: number; principal: number }>();
-  
+
   // Étape 1: Payer tous les intérêts
   activeLoans.forEach(lb => {
     const interest = lb.remaining * getMonthlyRate(lb.loan.annualRate);
@@ -218,7 +218,7 @@ export function optimizePlan(plan: FinancingPlan): {
   savings: number;
 } {
   const optimizedTable: AmortizationRow[] = [];
-  const { minStartDate, totalMonths } = getDateBounds(plan.selectedLoans);
+  const { minStartDate, totalMonths } = getDateBounds(plan.loans || []);
 
   // Calculer le mois d'optimisation (aujourd'hui)
   const today = new Date();
@@ -226,13 +226,13 @@ export function optimizePlan(plan: FinancingPlan): {
   const startOptimizationMonth = Math.max(1, currentMonth);
 
   // Budget mensuel total disponible
-  const totalMonthlyBudget = plan.selectedLoans.reduce(
+  const totalMonthlyBudget = (plan.loans || []).reduce(
     (sum, loan) => sum + loan.monthlyPayment,
     0
   );
 
   // Initialiser les soldes
-  const loanBalances = initializeLoanBalances(plan.selectedLoans, minStartDate);
+  const loanBalances = initializeLoanBalances(plan.loans || [], minStartDate);
 
   // Pré-calculer les soldes jusqu'au mois courant
   precalculateBalances(loanBalances, startOptimizationMonth);
@@ -240,7 +240,7 @@ export function optimizePlan(plan: FinancingPlan): {
   // Générer le tableau d'amortissement optimisé
   for (let month = startOptimizationMonth; month <= totalMonths; month++) {
     const currentDate = addMonths(minStartDate, month);
-    
+
     const activeLoans = loanBalances.filter(
       lb => month > lb.startMonth && lb.remaining > 0.01
     );

@@ -8,15 +8,21 @@
 		onLoad: (loan: SavedLoan) => void;
 		onDelete: (id: string) => void;
 		onClone: (loan: SavedLoan) => void;
+		isActive?: boolean;
 	};
 
-	let { loan, onLoad, onDelete, onClone }: Props = $props();
+	let { loan, onLoad, onDelete, onClone, isActive = false }: Props = $props();
 </script>
 
-<div class="loan-card">
+<div class="loan-card" class:active={isActive}>
 	<div class="loan-card-header">
-		<h3>{loan.name}</h3>
-		<button onclick={() => onDelete(loan.id)} class="btn-delete" title="Supprimer"> 🗑️ </button>
+		{#if isActive}
+			<span class="editing-badge">✏️ En cours d'édition</span>
+		{/if}
+		<div class="loan-card-title-row">
+			<h3>{loan.name}</h3>
+			<button onclick={() => onDelete(loan.id)} class="btn-delete" title="Supprimer"> 🗑️ </button>
+		</div>
 	</div>
 	<div class="loan-details">
 		<div class="loan-detail">
@@ -43,7 +49,7 @@
 		</div>
 	</div>
 	<div class="loan-actions">
-		<button onclick={() => onLoad(loan)} class="btn-load"> 📂 Charger </button>
+		<button onclick={() => onLoad(loan)} class="btn-load"> ✏️ Modifier </button>
 		<button onclick={() => onClone(loan)} class="btn-clone"> 📋 Cloner </button>
 	</div>
 </div>
@@ -63,11 +69,35 @@
 		transform: translateY(-2px);
 	}
 
+	.loan-card.active {
+		border-color: #667eea;
+		background: #f0f0ff;
+		box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+	}
+
+	.editing-badge {
+		display: inline-block;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
+		font-size: 0.75rem;
+		font-weight: 600;
+		padding: 0.2rem 0.6rem;
+		border-radius: 999px;
+		margin-bottom: 0.4rem;
+		width: fit-content;
+	}
+
 	.loan-card-header {
+		margin-bottom: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.loan-card-title-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 1rem;
 	}
 
 	.loan-card-header h3 {

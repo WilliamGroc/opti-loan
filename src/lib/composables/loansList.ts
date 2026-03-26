@@ -7,6 +7,7 @@ import type { SavedLoan } from '../services/types';
 import {
   loadLoans,
   saveLoan,
+  updateLoan,
   deleteLoan,
   cloneLoan,
   exportLoans
@@ -25,6 +26,13 @@ export function createLoansListStore() {
     add: (loanData: Omit<SavedLoan, 'id' | 'saveDate'>) => {
       update(loans => {
         const updated = saveLoan(loans, loanData);
+        return updated;
+      });
+    },
+
+    update: (id: string, loanData: Omit<SavedLoan, 'id' | 'saveDate'>) => {
+      update(loans => {
+        const updated = updateLoan(loans, id, loanData);
         return updated;
       });
     },

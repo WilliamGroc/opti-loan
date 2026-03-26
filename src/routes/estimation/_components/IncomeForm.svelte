@@ -100,6 +100,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
+		background-color: white;
+		padding: 1.5rem;
+		border-radius: 12px;
 	}
 
 	.income-grid {

@@ -37,10 +37,12 @@
 	};
 
 	const loansStore = createLoansListStore();
+	let selectedLoan = $state<SavedLoan | null>(null);
+	let editingLoanId = $state<string | null>(null);
 
 	function loadLoan(loan: SavedLoan) {
-		// TODO: Charger le prêt dans le calculateur
-		console.log('Chargement du prêt:', loan);
+		selectedLoan = loan;
+		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
 	$effect(() => {
@@ -82,7 +84,7 @@
 		</header>
 
 		<!-- Calculateur principal -->
-		<LoanCalculator />
+		<LoanCalculator bind:selectedLoan bind:editingLoanId />
 
 		<!-- Prêts sauvegardés -->
 		<PageSection
@@ -92,7 +94,7 @@
 			collapsible={true}
 			defaultExpanded={true}
 		>
-			<SavedLoansList onLoad={loadLoan} />
+			<SavedLoansList onLoad={loadLoan} {editingLoanId} />
 		</PageSection>
 
 		<!-- Call to action pour les plans -->

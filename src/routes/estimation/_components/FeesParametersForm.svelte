@@ -166,6 +166,9 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 		gap: 1.5rem;
+		background-color: white;
+		padding: 1.5rem;
+		border-radius: 12px;
 	}
 
 	.form-group {

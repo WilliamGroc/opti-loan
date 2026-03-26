@@ -49,6 +49,45 @@ export function saveLoan(
 }
 
 /**
+ * Met a jour un pret existant
+ */
+export function updateLoan(
+  loans: SavedLoan[],
+  id: string,
+  loanData: {
+    name: string;
+    amount: number;
+    annualRate: number;
+    durationYears: number;
+    monthlyPayment: number;
+    startDate: string;
+    calculationMode: 'payment' | 'duration' | 'variable';
+    paymentPeriods?: MonthlyPaymentPeriod[];
+  }
+): SavedLoan[] {
+  const updatedLoans = loans.map((loan) =>
+    loan.id === id
+      ? {
+        ...loan,
+        name: loanData.name,
+        amount: loanData.amount,
+        annualRate: loanData.annualRate,
+        durationYears: loanData.durationYears,
+        monthlyPayment: loanData.monthlyPayment,
+        startDate: loanData.startDate,
+        calculationMode: loanData.calculationMode,
+        saveDate: new Date().toISOString(),
+        paymentPeriods:
+          loanData.calculationMode === 'variable' ? loanData.paymentPeriods : undefined
+      }
+      : loan
+  );
+
+  saveToStorage('LOANS', updatedLoans);
+  return updatedLoans;
+}
+
+/**
  * Supprime un prêt
  */
 export function deleteLoan(loans: SavedLoan[], id: string): SavedLoan[] {

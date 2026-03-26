@@ -79,15 +79,7 @@
 
 <div class="app-wrapper">
 	<Navigation currentPage="estimation" />
-
-	<div class="container">
-		<div class="page-hero">
-			<h1>💰 Estimation de Capacité</h1>
-			<p class="hero-subtitle">Calculez votre capacité d'emprunt et le prix maximum du bien</p>
-		</div>
-
-		<FinancingEstimator />
-	</div>
+	<FinancingEstimator />
 </div>
 
 <style>
@@ -103,49 +95,5 @@
 	.app-wrapper {
 		min-height: 100vh;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	}
-
-	.container {
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 0 2rem 3rem 2rem;
-	}
-
-	.page-hero {
-		text-align: center;
-		padding: 3rem 0;
-		color: white;
-	}
-
-	.page-hero h1 {
-		font-size: 2.75rem;
-		margin: 0 0 1rem 0;
-		text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-		font-weight: 700;
-	}
-
-	.hero-subtitle {
-		font-size: 1.125rem;
-		margin: 0;
-		opacity: 0.95;
-		font-weight: 400;
-	}
-
-	@media (max-width: 768px) {
-		.container {
-			padding: 0 1rem 2rem 1rem;
-		}
-
-		.page-hero {
-			padding: 2rem 0;
-		}
-
-		.page-hero h1 {
-			font-size: 2rem;
-		}
-
-		.hero-subtitle {
-			font-size: 1rem;
-		}
 	}
 </style>

@@ -12,7 +12,10 @@
 		calculationMode?: 'payment' | 'duration' | 'variable';
 		paymentPeriods?: MonthlyPaymentPeriod[];
 		loanName?: string;
+		isEditing?: boolean;
+		editingLoanName?: string;
 		onSaveLoan: () => void;
+		onResetForm: () => void;
 	};
 
 	let {
@@ -24,7 +27,10 @@
 		calculationMode = $bindable('payment' as 'payment' | 'duration' | 'variable'),
 		paymentPeriods = $bindable([] as MonthlyPaymentPeriod[]),
 		loanName = $bindable(''),
-		onSaveLoan
+		isEditing = false,
+		editingLoanName = '',
+		onSaveLoan,
+		onResetForm
 	}: Props = $props();
 </script>
 
@@ -86,7 +92,12 @@
 	{/if}
 
 	<div class="save-section">
-		<h3>Sauvegarder ce prêt</h3>
+		<h3>{isEditing ? 'Modifier ce prêt' : 'Sauvegarder ce prêt'}</h3>
+		{#if isEditing}
+			<p class="edit-hint">
+				Vous modifiez actuellement <strong>{editingLoanName}</strong>.
+			</p>
+		{/if}
 		<div class="save-controls">
 			<input
 				type="text"
@@ -94,7 +105,12 @@
 				bind:value={loanName}
 				class="save-input"
 			/>
-			<button onclick={onSaveLoan} class="btn-primary"> 💾 Sauvegarder </button>
+			<button onclick={onSaveLoan} class="btn-primary">
+				{isEditing ? '💾 Mettre à jour' : '💾 Sauvegarder'}
+			</button>
+			{#if isEditing}
+				<button type="button" onclick={onResetForm} class="btn-secondary"> Nouveau prêt </button>
+			{/if}
 		</div>
 	</div>
 </div>
@@ -183,6 +199,13 @@
 		display: flex;
 		gap: 1rem;
 		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.edit-hint {
+		margin: 0 0 1rem 0;
+		color: #4a5568;
+		font-size: 0.95rem;
 	}
 
 	.save-input {
@@ -221,6 +244,24 @@
 
 	.btn-primary:active {
 		transform: translateY(0);
+	}
+
+	.btn-secondary {
+		padding: 0.75rem 1.5rem;
+		background: white;
+		color: #667eea;
+		border: 2px solid #667eea;
+		border-radius: 8px;
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		white-space: nowrap;
+	}
+
+	.btn-secondary:hover {
+		background: #667eea;
+		color: white;
 	}
 
 	@media (max-width: 768px) {

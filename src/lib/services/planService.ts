@@ -2,8 +2,9 @@
  * Service pour la gestion des plans de financement
  */
 
-import type { FinancingPlan, SavedLoan } from './types';
+import type { FinancingPlan } from './types';
 import { loadFromStorage, saveToStorage } from './storageService';
+import { loadLoans } from './loanService';
 
 /**
  * Charge les plans de financement depuis le localStorage
@@ -70,7 +71,7 @@ export function updateFinancingPlan(
 export function createFinancingPlan(
   plans: FinancingPlan[],
   planName: string,
-  selectedLoans: SavedLoan[]
+  selectedLoans: string[]
 ): FinancingPlan[] {
   const plan: FinancingPlan = {
     id: `plan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -87,7 +88,21 @@ export function createFinancingPlan(
  */
 export function getFinancingPlanById(id: string): FinancingPlan | undefined {
   const plans = loadFinancingPlans();
-  return plans.find(plan => plan.id === id);
+  const loans = loadLoans();
+  const selectedPlan = plans.find(plan => plan.id === id);
+
+  if (!selectedPlan) {
+    return undefined;
+  }
+
+  for (const loadId of selectedPlan?.selectedLoans || []) {
+    const load = loans.find(l => l.id === loadId);
+    if (load) {
+      selectedPlan.loans = [...(selectedPlan.loans || []), load];
+    }
+  }
+
+  return selectedPlan;
 }
 
 /**
